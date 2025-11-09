@@ -309,7 +309,7 @@
                         @endcan
                         @can('gestionar_suplencias')
                             <a href="{{ route('suplencias.index') }}" class="block px-3 py-2 rounded-lg hover:bg-white/5 text-slate-300 text-sm transition {{ request()->routeIs('suplencias.*') ? 'bg-white/5 text-slate-100' : '' }}">
-                                CU-22. Suplencias
+                                CU-22. Suplencias PRUEBA
                             </a>
                         @endcan
                     </div>
@@ -320,9 +320,19 @@
                      Operaciones y Reportes
                    ======================== --}}
                 @canany(['gestionar_reprogramaciones', 'ver_reportes'])
-                <div class="pt-6">
-                    <div class="px-3 text-xs uppercase tracking-wider text-slate-500 mb-2">Operaciones y Reportes</div>
-                    <div class="space-y-1">
+                <div x-data="{ openOps: {{ request()->routeIs('reprogramaciones.*') || request()->routeIs('reportes.*') ? 'true' : 'false' }} }">
+                    <button @click="openOps = ! openOps" class="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-white/5 text-slate-200 transition">
+                        <div class="flex items-center gap-3">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            <span>Operaciones y Reportes</span>
+                        </div>
+                        <svg :class="{'rotate-180': openOps}" class="w-4 h-4 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </button>
+                    <div x-show="openOps" x-transition class="mt-2 space-y-1 pl-3">
                         @can('gestionar_reprogramaciones')
                             <a href="{{ route('reprogramaciones.index') }}" class="block px-3 py-2 rounded-lg hover:bg-white/5 text-slate-300 text-sm transition {{ request()->routeIs('reprogramaciones.*') ? 'bg-white/5 text-slate-100' : '' }}">
                                 CU-23. Reprogramaciones
@@ -682,8 +692,8 @@
             {{-- =======================
                  Operaciones y Reportes
                ======================= --}}
-            {{-- Placeholder para CU-23 y CU-24 --}}
-            {{-- <div x-data="{ open: false }">
+            @canany(['gestionar_reprogramaciones', 'ver_reportes'])
+            <div x-data="{ open: {{ request()->routeIs('reprogramaciones.*') || request()->routeIs('reportes.*') ? 'true' : 'false' }} }">
                 <button @click="open = ! open" class="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-white/5 text-slate-200 transition">
                     <div class="flex items-center gap-3">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -696,10 +706,19 @@
                     </svg>
                 </button>
                 <div x-show="open" x-transition class="mt-2 space-y-1 pl-3">
-                    <a href="#" class="block px-3 py-2 rounded-lg opacity-50 cursor-not-allowed text-slate-400 text-sm">CU-23. Reprogramaciones</a>
-                    <a href="#" class="block px-3 py-2 rounded-lg opacity-50 cursor-not-allowed text-slate-400 text-sm">CU-24. Reportería</a>
+                    @can('gestionar_reprogramaciones')
+                        <a href="{{ route('reprogramaciones.index') }}" class="block px-3 py-2 rounded-lg hover:bg-white/5 text-slate-300 text-sm transition {{ request()->routeIs('reprogramaciones.*') ? 'bg-white/5 text-slate-100' : '' }}">
+                            CU-23. Reprogramaciones
+                        </a>
+                    @endcan
+                    @can('ver_reportes')
+                        <a href="{{ route('reportes.index') }}" class="block px-3 py-2 rounded-lg hover:bg-white/5 text-slate-300 text-sm transition {{ request()->routeIs('reportes.*') ? 'bg-white/5 text-slate-100' : '' }}">
+                            CU-24. Reportería y Descargas
+                        </a>
+                    @endcan
                 </div>
-            </div> --}}
+            </div>
+            @endcanany
 
             {{-- Bitácora al final --}}
             @can('ver_bitacora')

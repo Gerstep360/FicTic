@@ -102,7 +102,7 @@ class RolesPermissionsSeeder extends Seeder
             'gestionar_justificaciones',
             'solicitar_justificacion',
             'gestionar_suplencias',
-            
+                        
             // Fase 5
             'gestionar_reprogramaciones',
             'aprobar_reprogramaciones',

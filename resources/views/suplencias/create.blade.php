@@ -1,11 +1,11 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex items-center justify-between">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
                 {{ __('Registrar Nueva Suplencia') }}
             </h2>
-            <a href="{{ route('suplencias.index') }}" class="inline-flex items-center px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white font-semibold rounded-lg shadow transition">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <a href="{{ route('suplencias.index') }}" class="btn-ghost gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
                 </svg>
                 Cancelar
@@ -13,18 +13,18 @@
         </div>
     </x-slot>
 
-    <div class="py-6">
+    <div class="py-12">
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
             
             @if(session('error'))
-                <div class="mb-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded">
+                <div class="mb-4 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 text-red-700 dark:text-red-300 p-4 rounded">
                     <p class="font-bold">Error</p>
                     <p>{{ session('error') }}</p>
                 </div>
             @endif
 
             @if($errors->any())
-                <div class="mb-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded">
+                <div class="mb-4 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 text-red-700 dark:text-red-300 p-4 rounded">
                     <p class="font-bold">Por favor corrige los siguientes errores:</p>
                     <ul class="list-disc list-inside mt-2">
                         @foreach($errors->all() as $error)
@@ -34,18 +34,18 @@
                 </div>
             @endif
 
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+            <div class="card">
                 <div class="p-6">
-                    <form method="POST" action="{{ route('suplencias.store') }}">
+                    <form method="POST" action="{{ route('suplencias.store') }}" class="space-y-6">
                         @csrf
 
                         {{-- Docente Ausente --}}
-                        <div class="mb-6">
-                            <label for="id_docente_ausente" class="block text-sm font-medium text-gray-700 mb-2">
+                        <div>
+                            <label for="id_docente_ausente" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                 Docente Ausente <span class="text-red-500">*</span>
                             </label>
                             <select name="id_docente_ausente" id="id_docente_ausente" required 
-                                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 @error('id_docente_ausente') border-red-500 @enderror"
+                                    class="input @error('id_docente_ausente') border-red-500 @enderror"
                                     onchange="cargarHorarios()">
                                 <option value="">-- Seleccione un docente --</option>
                                 @foreach($docentes as $docente)
@@ -55,74 +55,74 @@
                                 @endforeach
                             </select>
                             @error('id_docente_ausente')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                             @enderror
                         </div>
 
                         {{-- Fecha de la Clase --}}
-                        <div class="mb-6">
-                            <label for="fecha_clase" class="block text-sm font-medium text-gray-700 mb-2">
+                        <div>
+                            <label for="fecha_clase" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                 Fecha de la Clase <span class="text-red-500">*</span>
                             </label>
                             <input type="date" name="fecha_clase" id="fecha_clase" value="{{ old('fecha_clase') }}" required
                                    min="{{ date('Y-m-d') }}"
-                                   class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 @error('fecha_clase') border-red-500 @enderror"
+                                   class="input @error('fecha_clase') border-red-500 @enderror"
                                    onchange="buscarDocentesDisponibles()">
                             @error('fecha_clase')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                             @enderror
                         </div>
 
                         {{-- Horario (se llena después de seleccionar docente) --}}
-                        <div class="mb-6" id="horario-container" style="display: none;">
-                            <label for="id_horario" class="block text-sm font-medium text-gray-700 mb-2">
+                        <div id="horario-container" style="display: none;">
+                            <label for="id_horario" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                 Horario de la Clase <span class="text-red-500">*</span>
                             </label>
                             <select name="id_horario" id="id_horario" 
-                                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 @error('id_horario') border-red-500 @enderror"
+                                    class="input @error('id_horario') border-red-500 @enderror"
                                     onchange="buscarDocentesDisponibles()">
                                 <option value="">-- Seleccione un horario --</option>
                             </select>
                             @error('id_horario')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                             @enderror
-                            <p class="mt-1 text-xs text-gray-500">Seleccione el horario de la clase que necesita suplencia</p>
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Seleccione el horario de la clase que necesita suplencia</p>
                         </div>
 
                         {{-- Docente Suplente --}}
-                        <div class="mb-6" id="suplente-container" style="display: none;">
-                            <label for="id_docente_suplente" class="block text-sm font-medium text-gray-700 mb-2">
+                        <div id="suplente-container" style="display: none;">
+                            <label for="id_docente_suplente" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                 Docente Suplente <span class="text-red-500">*</span>
                             </label>
                             <select name="id_docente_suplente" id="id_docente_suplente" 
-                                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 @error('id_docente_suplente') border-red-500 @enderror">
+                                    class="input @error('id_docente_suplente') border-red-500 @enderror">
                                 <option value="">-- Seleccione un docente suplente --</option>
                             </select>
                             @error('id_docente_suplente')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                             @enderror
-                            <p class="mt-1 text-xs text-gray-500" id="disponibles-info"></p>
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400" id="disponibles-info"></p>
                         </div>
 
                         {{-- Observaciones --}}
-                        <div class="mb-6">
-                            <label for="observaciones" class="block text-sm font-medium text-gray-700 mb-2">
+                        <div>
+                            <label for="observaciones" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                 Observaciones
                             </label>
                             <textarea name="observaciones" id="observaciones" rows="3" 
-                                      class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 @error('observaciones') border-red-500 @enderror"
+                                      class="input @error('observaciones') border-red-500 @enderror"
                                       placeholder="Información adicional sobre la suplencia...">{{ old('observaciones') }}</textarea>
                             @error('observaciones')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                             @enderror
                         </div>
 
                         {{-- Botones --}}
-                        <div class="flex items-center justify-end gap-3 pt-4 border-t">
-                            <a href="{{ route('suplencias.index') }}" class="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-700 font-semibold rounded-lg transition">
+                        <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                            <a href="{{ route('suplencias.index') }}" class="btn-ghost">
                                 Cancelar
                             </a>
-                            <button type="submit" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow transition">
+                            <button type="submit" class="btn-primary">
                                 Registrar Suplencia
                             </button>
                         </div>
