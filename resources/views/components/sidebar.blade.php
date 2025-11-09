@@ -167,7 +167,7 @@
                     <div x-show="openOfr" x-transition class="mt-2 space-y-1 pl-3">
                         @can('gestionar_asignaturas')
                             <a href="{{ route('carreras.index') }}" class="block px-3 py-2 rounded-lg hover:bg-white/5 text-slate-300 text-sm transition {{ request()->routeIs('carreras.*') ? 'bg-white/5 text-slate-100' : '' }}">
-                                Gestionar Asignaturas
+                                CU-10. Gestionar Asignaturas
                                 <span class="block text-[11px] text-slate-500 mt-0.5">Buscar carrera (p.ej. Informática, Sistemas…)</span>
                             </a>
                         @endcan
@@ -175,7 +175,7 @@
                             <div x-data="{ openGrupos: {{ request()->routeIs('grupos.materias') || request()->routeIs('carreras.materias.grupos.*') ? 'true' : 'false' }} }" class="space-y-1">
                                 <button @click="openGrupos = ! openGrupos"
                                         class="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-white/5 text-slate-300 text-sm transition">
-                                    <span>Gestionar Grupos</span>
+                                    <span>CU-11. Gestionar Grupos</span>
                                     <svg :class="{'rotate-180': openGrupos}" class="w-4 h-4 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                                     </svg>
@@ -214,7 +214,123 @@
                         @endcan
                         @can('gestionar_aulas')
                             <a href="{{ route('aulas.index') }}" class="block px-3 py-2 rounded-lg hover:bg-white/5 text-slate-300 text-sm transition {{ request()->routeIs('aulas.*') ? 'bg-white/5 text-slate-100' : '' }}">
-                                Gestionar Aulas
+                                CU-12. Gestionar Aulas
+                            </a>
+                        @endcan
+                        @can('registrar_carga_docente')
+                            <a href="{{ route('cargas-docentes.index') }}" class="block px-3 py-2 rounded-lg hover:bg-white/5 text-slate-300 text-sm transition {{ request()->routeIs('cargas-docentes.*') ? 'bg-white/5 text-slate-100' : '' }}">
+                                CU-13. Registrar Carga Docente
+                            </a>
+                        @endcan
+                    </div>
+                </div>
+                @endcanany
+
+                {{-- =======================
+                     Programación de Horarios
+                   ======================= --}}
+                @canany(['asignar_horarios','generar_horario_auto','validar_conflictos','aprobar_horarios','publicar_horarios'])
+                <div x-data="{ openHor: {{ request()->routeIs('horarios.*') || request()->routeIs('generacion-horarios.*') || request()->routeIs('validacion-horarios.*') || request()->routeIs('aprobaciones.*') || request()->routeIs('publicacion.*') ? 'true' : 'false' }} }">
+                    <button @click="openHor = ! openHor" class="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-white/5 text-slate-200 transition">
+                        <div class="flex items-center gap-3">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                            <span>Programación de Horarios</span>
+                        </div>
+                        <svg :class="{'rotate-180': openHor}" class="w-4 h-4 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </button>
+                    <div x-show="openHor" x-transition class="mt-2 space-y-1 pl-3">
+                        @can('asignar_horarios')
+                            <a href="{{ route('horarios.index') }}" class="block px-3 py-2 rounded-lg hover:bg-white/5 text-slate-300 text-sm transition {{ request()->routeIs('horarios.*') ? 'bg-white/5 text-slate-100' : '' }}">
+                                CU-14. Asignación Manual
+                            </a>
+                        @endcan
+                        @can('generar_horario_auto')
+                            <a href="{{ route('generacion-horarios.index') }}" class="block px-3 py-2 rounded-lg hover:bg-white/5 text-slate-300 text-sm transition {{ request()->routeIs('generacion-horarios.*') ? 'bg-white/5 text-slate-100' : '' }}">
+                                CU-15. Generación Automática
+                            </a>
+                        @endcan
+                        @can('validar_conflictos')
+                            <a href="{{ route('validacion-horarios.index') }}" class="block px-3 py-2 rounded-lg hover:bg-white/5 text-slate-300 text-sm transition {{ request()->routeIs('validacion-horarios.*') ? 'bg-white/5 text-slate-100' : '' }}">
+                                CU-16. Gestión de Conflictos
+                            </a>
+                        @endcan
+                        @can('aprobar_horarios')
+                            <a href="{{ route('aprobaciones.index') }}" class="block px-3 py-2 rounded-lg hover:bg-white/5 text-slate-300 text-sm transition {{ request()->routeIs('aprobaciones.*') ? 'bg-white/5 text-slate-100' : '' }}">
+                                CU-17. Aprobación de Horarios
+                            </a>
+                        @endcan
+                        @can('publicar_horarios')
+                            <a href="{{ route('publicacion.index') }}" class="block px-3 py-2 rounded-lg hover:bg-white/5 text-slate-300 text-sm transition {{ request()->routeIs('publicacion.index') ? 'bg-white/5 text-slate-100' : '' }}">
+                                CU-18. Publicación de Horarios
+                            </a>
+                        @endcan
+                    </div>
+                </div>
+                @endcanany
+
+                {{-- Control de Asistencia Docente --}}
+                @canany(['generar_qr_docente','registrar_asistencia_qr','asistencia_manual','gestionar_justificaciones','gestionar_suplencias'])
+                <div x-data="{ openAsis: {{ request()->routeIs('qr-docente.*') || request()->routeIs('asistencia-qr.*') || request()->routeIs('asistencia-manual.*') || request()->routeIs('justificaciones.*') || request()->routeIs('suplencias.*') ? 'true' : 'false' }} }">
+                    <button @click="openAsis = ! openAsis" class="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-white/5 text-slate-200 transition">
+                        <div class="flex items-center gap-3">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
+                            </svg>
+                            <span>Control de Asistencia</span>
+                        </div>
+                        <svg :class="{'rotate-180': openAsis}" class="w-4 h-4 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </button>
+                    <div x-show="openAsis" x-transition class="mt-2 space-y-1 pl-3">
+                        @can('generar_qr_docente')
+                            <a href="{{ route('qr-docente.index') }}" class="block px-3 py-2 rounded-lg hover:bg-white/5 text-slate-300 text-sm transition {{ request()->routeIs('qr-docente.index') || request()->routeIs('qr-docente.ver') || request()->routeIs('qr-docente.estadisticas') ? 'bg-white/5 text-slate-100' : '' }}">
+                                CU-19. Generar QR Docente
+                            </a>
+                        @endcan
+                        @can('registrar_asistencia_qr')
+                            <a href="{{ route('asistencia-qr.index') }}" class="block px-3 py-2 rounded-lg hover:bg-white/5 text-slate-300 text-sm transition {{ request()->routeIs('asistencia-qr.*') ? 'bg-white/5 text-slate-100' : '' }}">
+                                CU-20. Registrar Asistencia (QR)
+                            </a>
+                        @endcan
+                        @can('asistencia_manual')
+                            <a href="{{ route('asistencia-manual.index') }}" class="block px-3 py-2 rounded-lg hover:bg-white/5 text-slate-300 text-sm transition {{ request()->routeIs('asistencia-manual.*') ? 'bg-white/5 text-slate-100' : '' }}">
+                                CU-21. Asistencia Manual
+                            </a>
+                        @endcan
+                        @can('gestionar_justificaciones')
+                            <a href="{{ route('justificaciones.index') }}" class="block px-3 py-2 rounded-lg hover:bg-white/5 text-slate-300 text-sm transition {{ request()->routeIs('justificaciones.*') ? 'bg-white/5 text-slate-100' : '' }}">
+                                CU-22. Justificaciones
+                            </a>
+                        @endcan
+                        @can('gestionar_suplencias')
+                            <a href="{{ route('suplencias.index') }}" class="block px-3 py-2 rounded-lg hover:bg-white/5 text-slate-300 text-sm transition {{ request()->routeIs('suplencias.*') ? 'bg-white/5 text-slate-100' : '' }}">
+                                CU-22. Suplencias
+                            </a>
+                        @endcan
+                    </div>
+                </div>
+                @endcanany
+
+                {{-- ========================
+                     Operaciones y Reportes
+                   ======================== --}}
+                @canany(['gestionar_reprogramaciones', 'ver_reportes'])
+                <div class="pt-6">
+                    <div class="px-3 text-xs uppercase tracking-wider text-slate-500 mb-2">Operaciones y Reportes</div>
+                    <div class="space-y-1">
+                        @can('gestionar_reprogramaciones')
+                            <a href="{{ route('reprogramaciones.index') }}" class="block px-3 py-2 rounded-lg hover:bg-white/5 text-slate-300 text-sm transition {{ request()->routeIs('reprogramaciones.*') ? 'bg-white/5 text-slate-100' : '' }}">
+                                CU-23. Reprogramaciones
+                            </a>
+                        @endcan
+                        @can('ver_reportes')
+                            <a href="{{ route('reportes.index') }}" class="block px-3 py-2 rounded-lg hover:bg-white/5 text-slate-300 text-sm transition {{ request()->routeIs('reportes.*') ? 'bg-white/5 text-slate-100' : '' }}">
+                                CU-24. Reportería y Descargas
                             </a>
                         @endcan
                     </div>
@@ -255,6 +371,34 @@
                             Perfil
                         </div>
                     </a>
+                    <a href="{{ route('qr-docente.mi-qr') }}" class="block px-3 py-2 rounded-lg hover:bg-white/5 text-slate-200 text-sm transition mb-1">
+                        <div class="flex items-center gap-3">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
+                            </svg>
+                            Mi QR de Asistencia
+                        </div>
+                    </a>
+                    @can('solicitar_justificacion')
+                    <a href="{{ route('justificaciones.mis-justificaciones') }}" class="block px-3 py-2 rounded-lg hover:bg-white/5 text-slate-200 text-sm transition mb-1">
+                        <div class="flex items-center gap-3">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            Mis Justificaciones
+                        </div>
+                    </a>
+                    @endcan
+                    @role('Docente')
+                    <a href="{{ route('suplencias.mis-suplencias') }}" class="block px-3 py-2 rounded-lg hover:bg-white/5 text-slate-200 text-sm transition mb-1">
+                        <div class="flex items-center gap-3">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                            </svg>
+                            Mis Suplencias
+                        </div>
+                    </a>
+                    @endrole
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
                         <button type="submit" class="w-full text-left px-3 py-2 rounded-lg hover:bg-red-500/10 text-red-400 hover:text-red-300 text-sm transition">
@@ -384,7 +528,7 @@
                 <div x-show="open" x-transition class="mt-2 space-y-1 pl-3">
                     @can('gestionar_asignaturas')
                         <a href="{{ route('carreras.index') }}" class="block px-3 py-2 rounded-lg hover:bg-white/5 text-slate-300 text-sm transition {{ request()->routeIs('carreras.*') ? 'bg-white/5 text-slate-100' : '' }}">
-                            Gestionar Asignaturas
+                            CU-10. Gestionar Asignaturas
                             <span class="block text-[11px] text-slate-500 mt-0.5">Buscar carrera (Informática, Sistemas…)</span>
                         </a>
                     @endcan
@@ -392,7 +536,7 @@
     <div x-data="{ openGrupos: {{ request()->routeIs('grupos.materias') || request()->routeIs('carreras.materias.grupos.*') ? 'true' : 'false' }} }" class="space-y-1">
         <button @click="openGrupos = ! openGrupos"
                 class="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-white/5 text-slate-300 text-sm transition">
-            <span>Gestionar Grupos</span>
+            <span>CU-11. Gestionar Grupos</span>
             <svg :class="{'rotate-180': openGrupos}" class="w-4 h-4 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
             </svg>
@@ -431,12 +575,131 @@
 @endcan
                     @can('gestionar_aulas')
                         <a href="{{ route('aulas.index') }}" class="block px-3 py-2 rounded-lg hover:bg-white/5 text-slate-300 text-sm transition {{ request()->routeIs('aulas.*') ? 'bg-white/5 text-slate-100' : '' }}">
-                            Gestionar Aulas
+                            CU-12. Gestionar Aulas
+                        </a>
+                    @endcan
+                    @can('registrar_carga_docente')
+                        <a href="{{ route('cargas-docentes.index') }}" class="block px-3 py-2 rounded-lg hover:bg-white/5 text-slate-300 text-sm transition {{ request()->routeIs('cargas-docentes.*') ? 'bg-white/5 text-slate-100' : '' }}">
+                            CU-13. Registrar Carga Docente
                         </a>
                     @endcan
                 </div>
             </div>
             @endcanany
+
+            {{-- =======================
+                 Programación de Horarios
+               ======================= --}}
+            @canany(['asignar_horarios','generar_horario_auto','validar_conflictos','aprobar_horarios','publicar_horarios'])
+            <div x-data="{ open: {{ request()->routeIs('horarios.*') || request()->routeIs('generacion-horarios.*') || request()->routeIs('validacion-horarios.*') || request()->routeIs('aprobaciones.*') || request()->routeIs('publicacion.*') ? 'true' : 'false' }} }">
+                <button @click="open = ! open" class="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-white/5 text-slate-200 transition">
+                    <div class="flex items-center gap-3">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                        <span>Programación de Horarios</span>
+                    </div>
+                    <svg :class="{'rotate-180': open}" class="w-4 h-4 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </button>
+                <div x-show="open" x-transition class="mt-2 space-y-1 pl-3">
+                    @can('asignar_horarios')
+                        <a href="{{ route('horarios.index') }}" class="block px-3 py-2 rounded-lg hover:bg-white/5 text-slate-300 text-sm transition {{ request()->routeIs('horarios.*') ? 'bg-white/5 text-slate-100' : '' }}">
+                            CU-14. Asignación Manual
+                        </a>
+                    @endcan
+                    @can('generar_horario_auto')
+                        <a href="{{ route('generacion-horarios.index') }}" class="block px-3 py-2 rounded-lg hover:bg-white/5 text-slate-300 text-sm transition {{ request()->routeIs('generacion-horarios.*') ? 'bg-white/5 text-slate-100' : '' }}">
+                            CU-15. Generación Automática
+                        </a>
+                    @endcan
+                    @can('validar_conflictos')
+                        <a href="{{ route('validacion-horarios.index') }}" class="block px-3 py-2 rounded-lg hover:bg-white/5 text-slate-300 text-sm transition {{ request()->routeIs('validacion-horarios.*') ? 'bg-white/5 text-slate-100' : '' }}">
+                            CU-16. Gestión de Conflictos
+                        </a>
+                    @endcan
+                    @can('aprobar_horarios')
+                        <a href="{{ route('aprobaciones.index') }}" class="block px-3 py-2 rounded-lg hover:bg-white/5 text-slate-300 text-sm transition {{ request()->routeIs('aprobaciones.*') ? 'bg-white/5 text-slate-100' : '' }}">
+                            CU-17. Aprobación de Horarios
+                        </a>
+                    @endcan
+                    @can('publicar_horarios')
+                        <a href="{{ route('publicacion.index') }}" class="block px-3 py-2 rounded-lg hover:bg-white/5 text-slate-300 text-sm transition {{ request()->routeIs('publicacion.index') ? 'bg-white/5 text-slate-100' : '' }}">
+                            CU-18. Publicación de Horarios
+                        </a>
+                    @endcan
+                </div>
+            </div>
+            @endcanany
+
+            {{-- =======================
+                 Control de Asistencia Docente
+               ======================= --}}
+            @canany(['generar_qr_docente','registrar_asistencia_qr','asistencia_manual'])
+            <div x-data="{ open: {{ request()->routeIs('qr-docente.*') || request()->routeIs('asistencia-qr.*') || request()->routeIs('asistencia-manual.*') ? 'true' : 'false' }} }">
+                <button @click="open = ! open" class="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-white/5 text-slate-200 transition">
+                    <div class="flex items-center gap-3">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
+                        </svg>
+                        <span>Control de Asistencia</span>
+                    </div>
+                    <svg :class="{'rotate-180': open}" class="w-4 h-4 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </button>
+                <div x-show="open" x-transition class="mt-2 space-y-1 pl-3">
+                    @can('generar_qr_docente')
+                        <a href="{{ route('qr-docente.index') }}" class="block px-3 py-2 rounded-lg hover:bg-white/5 text-slate-300 text-sm transition {{ request()->routeIs('qr-docente.index') || request()->routeIs('qr-docente.ver') || request()->routeIs('qr-docente.estadisticas') ? 'bg-white/5 text-slate-100' : '' }}">
+                            CU-19. Generar QR Docente
+                        </a>
+                    @endcan
+                    @can('registrar_asistencia_qr')
+                        <a href="{{ route('asistencia-qr.index') }}" class="block px-3 py-2 rounded-lg hover:bg-white/5 text-slate-300 text-sm transition {{ request()->routeIs('asistencia-qr.*') ? 'bg-white/5 text-slate-100' : '' }}">
+                            CU-20. Registrar Asistencia (QR)
+                        </a>
+                    @endcan
+                    @can('asistencia_manual')
+                        <a href="{{ route('asistencia-manual.index') }}" class="block px-3 py-2 rounded-lg hover:bg-white/5 text-slate-300 text-sm transition {{ request()->routeIs('asistencia-manual.*') ? 'bg-white/5 text-slate-100' : '' }}">
+                            CU-21. Asistencia Manual
+                        </a>
+                    @endcan
+                    @can('gestionar_justificaciones')
+                        <a href="{{ route('justificaciones.index') }}" class="block px-3 py-2 rounded-lg hover:bg-white/5 text-slate-300 text-sm transition {{ request()->routeIs('justificaciones.*') && !request()->routeIs('justificaciones.mis-*') ? 'bg-white/5 text-slate-100' : '' }}">
+                            CU-22. Justificaciones
+                        </a>
+                    @endcan
+                    @can('gestionar_suplencias')
+                        <a href="{{ route('suplencias.index') }}" class="block px-3 py-2 rounded-lg hover:bg-white/5 text-slate-300 text-sm transition {{ request()->routeIs('suplencias.*') && !request()->routeIs('suplencias.mis-*') ? 'bg-white/5 text-slate-100' : '' }}">
+                            CU-22. Suplencias
+                        </a>
+                    @endcan
+                </div>
+            </div>
+            @endcanany
+
+            {{-- =======================
+                 Operaciones y Reportes
+               ======================= --}}
+            {{-- Placeholder para CU-23 y CU-24 --}}
+            {{-- <div x-data="{ open: false }">
+                <button @click="open = ! open" class="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-white/5 text-slate-200 transition">
+                    <div class="flex items-center gap-3">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <span>Operaciones y Reportes</span>
+                    </div>
+                    <svg :class="{'rotate-180': open}" class="w-4 h-4 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </button>
+                <div x-show="open" x-transition class="mt-2 space-y-1 pl-3">
+                    <a href="#" class="block px-3 py-2 rounded-lg opacity-50 cursor-not-allowed text-slate-400 text-sm">CU-23. Reprogramaciones</a>
+                    <a href="#" class="block px-3 py-2 rounded-lg opacity-50 cursor-not-allowed text-slate-400 text-sm">CU-24. Reportería</a>
+                </div>
+            </div> --}}
 
             {{-- Bitácora al final --}}
             @can('ver_bitacora')
@@ -469,6 +732,15 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                         </svg>
                         Perfil
+                    </div>
+                </a>
+                <a href="{{ route('qr-docente.mi-qr') }}" 
+                   class="block px-3 py-2 rounded-lg hover:bg-white/5 text-slate-200 text-sm transition mb-1 {{ request()->routeIs('qr-docente.mi-qr') ? 'bg-white/5' : '' }}">
+                    <div class="flex items-center gap-3">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
+                        </svg>
+                        Mi QR de Asistencia
                     </div>
                 </a>
                 <form method="POST" action="{{ route('logout') }}">

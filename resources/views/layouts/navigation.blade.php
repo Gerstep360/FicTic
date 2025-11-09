@@ -118,10 +118,10 @@
                                     <x-dropdown-link :href="route('horarios.validar')">CU-16. Validar Conflictos</x-dropdown-link>
                                 @endcan
                                 @can('aprobar_horarios')
-                                    <x-dropdown-link :href="route('horarios.aprobar')">CU-17. Aprobar Horarios</x-dropdown-link>
+                                    <x-dropdown-link :href="route('aprobaciones.index')">CU-17. Aprobar Horarios</x-dropdown-link>
                                 @endcan
                                 @can('publicar_horarios')
-                                    <x-dropdown-link :href="route('horarios.publicar')">CU-18. Publicar Horarios</x-dropdown-link>
+                                    <x-dropdown-link :href="route('publicacion.index')">CU-18. Publicar Horarios</x-dropdown-link>
                                 @endcan
                             </x-slot>
                         </x-dropdown>
@@ -140,13 +140,13 @@
                             </x-slot>
                             <x-slot name="content">
                                 @can('generar_qr_docente')
-                                    <x-dropdown-link :href="route('docentes.qr')">CU-19. Generar QR por Docente</x-dropdown-link>
+                                    <x-dropdown-link :href="route('qr-docente.index')">CU-19. Gestión QR Docentes</x-dropdown-link>
                                 @endcan
                                 @can('registrar_asistencia_qr')
-                                    <x-dropdown-link :href="route('asistencias.qr')">CU-20. Registrar Asistencia (QR)</x-dropdown-link>
+                                    <x-dropdown-link :href="route('asistencia-qr.index')">CU-20. Registrar Asistencia (QR)</x-dropdown-link>
                                 @endcan
                                 @can('asistencia_manual')
-                                    <x-dropdown-link :href="route('asistencias.manual')">CU-21. Asistencia Manual</x-dropdown-link>
+                                    <x-dropdown-link :href="route('asistencia-manual.index')">CU-21. Asistencia Manual</x-dropdown-link>
                                 @endcan
                                 @can('gestionar_justificaciones')
                                     <x-dropdown-link :href="route('justificaciones.index')">CU-22. Justificaciones</x-dropdown-link>
@@ -206,6 +206,11 @@
                     <x-slot name="content">
                         <x-dropdown-link :href="route('profile.edit')">
                             {{ __('Profile') }}
+                        </x-dropdown-link>
+
+                        <!-- Mi QR de Asistencia (para todos los usuarios autenticados) -->
+                        <x-dropdown-link :href="route('qr-docente.mi-qr')">
+                            Mi QR de Asistencia
                         </x-dropdown-link>
 
                         <!-- Authentication -->
@@ -279,6 +284,20 @@
                 @endcan
             @endcanany
 
+            {{-- Fase 4: Control de Asistencia Docente --}}
+            @canany(['generar_qr_docente','registrar_asistencia_qr','asistencia_manual'])
+                <div class="px-4 pt-3 pb-1 text-xs font-semibold text-gray-500 dark:text-gray-400">Control de Asistencia Docente</div>
+                @can('generar_qr_docente')
+                    <x-responsive-nav-link :href="route('qr-docente.index')">CU-19. Gestión QR Docentes</x-responsive-nav-link>
+                @endcan
+                @can('registrar_asistencia_qr')
+                    <x-responsive-nav-link :href="route('asistencia-qr.index')">CU-20. Registrar Asistencia (QR)</x-responsive-nav-link>
+                @endcan
+                @can('asistencia_manual')
+                    <x-responsive-nav-link :href="route('asistencia-manual.index')">CU-21. Asistencia Manual</x-responsive-nav-link>
+                @endcan
+            @endcanany
+
             {{-- Bitácora (al final) --}}
             @can('ver_bitacora')
                 <div class="px-4 pt-3 pb-1 text-xs font-semibold text-gray-500 dark:text-gray-400">Auditoría</div>
@@ -296,6 +315,9 @@
             <div class="mt-3 space-y-1">
                 <x-responsive-nav-link :href="route('profile.edit')">
                     {{ __('Profile') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('qr-docente.mi-qr')">
+                    Mi QR de Asistencia
                 </x-responsive-nav-link>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf

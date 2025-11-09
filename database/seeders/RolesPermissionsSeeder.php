@@ -51,7 +51,7 @@ class RolesPermissionsSeeder extends Seeder
          *   CU-22 gestionar_suplencias
          *
          * Fase 5 – Operación y Reportes
-         *   CU-23 reprogramaciones
+         *   CU-23 gestionar_reprogramaciones, aprobar_reprogramaciones
          *   CU-24 ver_reportes
          *
          * Permisos de lectura/acciones propias (docente) y consultas operativas:
@@ -86,6 +86,27 @@ class RolesPermissionsSeeder extends Seeder
             'eliminar_aulas',
             'restaurar_aulas',
             'gestionar_aulas',
+            'registrar_carga_docente',
+
+            // Fase 3
+            'asignar_horarios',
+            'generar_horario_auto',
+            'validar_conflictos',
+            'aprobar_horarios',
+            'publicar_horarios',
+            
+            // Fase 4
+            'generar_qr_docente',
+            'registrar_asistencia_qr',
+            'asistencia_manual',
+            'gestionar_justificaciones',
+            'solicitar_justificacion',
+            'gestionar_suplencias',
+            
+            // Fase 5
+            'gestionar_reprogramaciones',
+            'aprobar_reprogramaciones',
+            'ver_reportes',
 
             // Lectura/ámbito propio y consultas operativas
             'ver_horario_propio',
@@ -94,13 +115,11 @@ class RolesPermissionsSeeder extends Seeder
             'ver_horario_por_aula',
 
             //ambito
-            'asignar_perfiles_ambitos',
             'ver_asignaciones_ambito',
             'eliminar_asignacion_ambito',
 
             //bitacora
-            'ver_bitacora',
-            'ver_reportes'
+            'ver_bitacora'
 
         ];
 
@@ -130,13 +149,23 @@ class RolesPermissionsSeeder extends Seeder
         // 2) Decano/Vicedecano: supervisión y aprobación/publicación + reportes (visión global)
         Role::findByName('Decano', $guard)->syncPermissions([
             'abrir_gestion',            // CU-01 (puede participar en apertura)
+            'publicar_horarios',        // CU-18 (aprobación final facultativa)
+            'ver_reportes',             // CU-24 (reportes consolidados)
         ]);
 
         // 3) Director de Carrera: valida/aprueba horarios de su carrera; oferta y carga; reportes; puede asignar coordinadores (CU-07) en su ámbito
         Role::findByName('Director', $guard)->syncPermissions([
             'gestionar_asignaturas',    // CU-10
             'gestionar_grupos',         // CU-11
+            'registrar_carga_docente',  // CU-13
+            'asignar_horarios',         // CU-14
+            'generar_horario_auto',     // CU-15
+            'validar_conflictos',       // CU-16
+            'aprobar_horarios',         // CU-17 (aprobación nivel carrera)
             'asignar_perfiles_ambitos', // CU-07 (limitado a su carrera por lógica de negocio)
+            'gestionar_reprogramaciones', // CU-23
+            'aprobar_reprogramaciones',   // CU-23
+            'ver_reportes',             // CU-24
         ]);
 
         // 4) Coordinador de Carrera: núcleo operativo de programación y asistencia (no publica ni aprueba final)
@@ -144,6 +173,33 @@ class RolesPermissionsSeeder extends Seeder
             'gestionar_asignaturas',    // CU-10
             'gestionar_grupos',         // CU-11
             'gestionar_aulas',          // CU-12 (en la práctica puede actualizar catálogos de aulas de su ámbito)
+            'registrar_carga_docente',  // CU-13
+            'asignar_horarios',         // CU-14
+            'generar_horario_auto',     // CU-15
+            'validar_conflictos',       // CU-16
+            'generar_qr_docente',       // CU-19 (genera QR para docentes de su carrera)
+            'registrar_asistencia_qr',  // CU-20
+            'asistencia_manual',        // CU-21
+            'gestionar_justificaciones',// CU-22
+            'gestionar_suplencias',     // CU-22
+            'gestionar_reprogramaciones', // CU-23
+            'aprobar_reprogramaciones',   // CU-23
+            'ver_reportes',             // CU-24
+        ]);
+        
+        // 5) Docente: acceso limitado a su información personal
+        Role::findByName('Docente', $guard)->syncPermissions([
+            'ver_horario_propio',
+            'ver_asistencias_propias',
+            'solicitar_justificacion',
+            'ver_horario_por_aula',
+        ]);
+        
+        // 6) Bedel: control operativo de asistencia
+        Role::findByName('Bedel', $guard)->syncPermissions([
+            'registrar_asistencia_qr',  // CU-20 (escaneo de QR)
+            'asistencia_manual',        // CU-21 (registro manual)
+            'ver_horario_por_aula',     // Consulta de horarios
         ]);
 
 

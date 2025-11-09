@@ -9,7 +9,7 @@
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                 </svg>
-                Descargar plantilla CSV
+                Descargar plantilla Excel (.xlsx)
             </a>
         </div>
     </x-slot>
@@ -33,7 +33,7 @@
                                 <svg class="w-5 h-5 text-sky-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>
-                                <span><strong>Descarga la plantilla CSV</strong> con las cabeceras correctas: ID, NOMBRE, CORREO, CONTRASEÑA</span>
+                                <span><strong>Descarga la plantilla xlsx</strong> con las cabeceras correctas: ID, NOMBRE, CORREO, CONTRASEÑA</span>
                             </li>
                             <li class="flex items-start gap-2">
                                 <svg class="w-5 h-5 text-sky-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -80,7 +80,7 @@
                                     type="file" 
                                     id="archivo" 
                                     name="archivo" 
-                                    accept=".csv,.txt"
+                                    accept=".xlsx,.xls,.csv,.txt"
                                     required
                      class="input file:mr-4 file:py-3 file:px-4 file:rounded-l-xl file:border-0 file:text-sm file:font-semibold"
                                     onchange="mostrarNombreArchivo(this)"
@@ -160,7 +160,7 @@
             {{-- Ejemplo de formato --}}
             <div class="mt-6 card p-6">
                 <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
-                    Ejemplo de formato CSV:
+                    Ejemplo de formato:
                 </h3>
                 <pre class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 text-xs text-gray-800 dark:text-gray-200 overflow-x-auto"><code>ID,NOMBRE,CORREO,CONTRASEÑA
 ,María Pérez,maria.perez@ficct.uagrm.edu.bo,

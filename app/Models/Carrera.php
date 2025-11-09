@@ -15,6 +15,14 @@ class Carrera extends Model
     protected $keyType = 'int';
     protected $guarded = [];
 
+    /**
+     * Accessor para mantener compatibilidad con código que usa nombre_carrera
+     */
+    public function getNombreCarreraAttribute()
+    {
+        return $this->attributes['nombre'];
+    }
+
     public function facultad()
     {
         return $this->belongsTo(Facultad::class, 'id_facultad', 'id_facultad');

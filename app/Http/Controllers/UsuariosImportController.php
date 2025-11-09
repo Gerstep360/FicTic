@@ -10,6 +10,11 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\CredencialesGeneradas;
 
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\PlantillaUsuariosExport;
+use App\Imports\UsuariosHeadingImport;
+use Spatie\Permission\Models\Role;
+
 class UsuariosImportController extends Controller
 {
     use LogsBitacora;
@@ -20,193 +25,237 @@ class UsuariosImportController extends Controller
         $this->middleware(['permission:importar_usuarios']);
     }
 
-    /**
-     * Formulario de importación (CSV).
-     * CSV esperado (UTF-8): ID,NOMBRE,CORREO,CONTRASEÑA
-     */
     public function create(Request $request)
     {
-        $id_gestion = $request->get('id_gestion'); // opcional (para bitácora)
-        // La vista puede mostrar un botón/link a route('usuarios.import.plantilla')
+        $id_gestion = $request->get('id_gestion');
         return view('usuarios.import.create', compact('id_gestion'));
     }
 
     /**
-     * Descarga de la PLANTILLA CSV (cabeceras en español).
+     * NUEVO: Descarga plantilla en XLSX con casillas (sin datos).
      */
     public function plantilla()
     {
-        $filename = 'plantilla_usuarios.csv';
-        $bom = "\xEF\xBB\xBF"; // BOM UTF-8 para Excel
-        $csv = $bom . implode("\r\n", [
-            'ID,NOMBRE,CORREO,CONTRASEÑA',
-            ',María Pérez,maria.perez@ficct.uagrm.edu.bo,',       // sin contraseña -> se genera
-            '12,Carlos Rojas,carlos.rojas@ficct.uagrm.edu.bo,',    // actualiza por ID
-            ',Juan Gómez,juan.gomez@ficct.uagrm.edu.bo,Pass!2025', // con contraseña explícita
-        ]);
-
-        return response($csv, 200, [
-            'Content-Type'        => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => "attachment; filename=\"$filename\"",
-        ]);
+        return Excel::download(new PlantillaUsuariosExport, 'plantilla_usuarios.xlsx');
     }
 
     /**
-     * Procesa el CSV y crea/actualiza usuarios por lote.
-     * Cabeceras esperadas: ID,NOMBRE,CORREO,CONTRASEÑA (CONTRASEÑA opcional).
-     * Si CONTRASEÑA está vacía al crear: se genera una temporal y se envía por email (CU-06).
+     * Importa XLSX/XLS/CSV con encabezado: ID, NOMBRE, CORREO, CONTRASEÑA, ROLES
+     * - CONTRASEÑA vacía al crear -> genera temporal y notifica (si hay correo).
+     * - ROLES (opcional): separar por ';'. Si se proporcionan => reemplaza roles del usuario.
      */
-    public function store(Request $request)
-    {
-        $data = $request->validate([
-            'archivo'    => ['required','file','mimes:csv,txt','max:20480'], // 20MB
-            'id_gestion' => ['sometimes','integer'],
-        ]);
+public function store(Request $request)
+{
+    $data = $request->validate([
+        'archivo'    => ['required','file','mimes:xlsx,xls,csv,txt','max:20480'],
+        'id_gestion' => ['sometimes','integer'],
+    ]);
 
-        $path  = $request->file('archivo')->getRealPath();
-        $delim = $this->detectarDelimitador($path);
-        $fh    = fopen($path, 'r');
+    $file = $request->file('archivo');
+    $ext  = strtolower($file->getClientOriginalExtension());
 
-        if (!$fh) {
-            return back()->withErrors(['archivo' => 'No se pudo leer el archivo subido.'])->withInput();
-        }
+    // ← Usaremos este arreglo y lo pasaremos por referencia
+    $contadores = ['creados' => 0, 'actualizados' => 0, 'omitidos' => 0, 'notificados' => 0];
+    $errores    = [];
 
-        // Lee cabecera
-        $header = $this->leerLineaCsv($fh, $delim);
-        if (!$header) {
-            return back()->withErrors(['archivo' => 'El archivo está vacío o sin cabecera.'])->withInput();
-        }
+    try {
+        if (in_array($ext, ['xlsx','xls'])) {
+            // ---- Excel con encabezado ----
+            $sheets = Excel::toCollection(new UsuariosHeadingImport, $file);
+            $rows   = $sheets->first() ?? collect();
 
-        // Mapeo de cabeceras a índices (español como prioridad)
-        $map = $this->mapearCabecera($header); // indices para: id, nombre, correo, contraseña
-        if (!isset($map['correo']) && !isset($map['id'])) {
-            return back()->withErrors(['archivo' => 'La cabecera debe incluir al menos "CORREO" o "ID".'])->withInput();
-        }
-        if (!isset($map['nombre'])) {
-            return back()->withErrors(['archivo' => 'La cabecera debe incluir "NOMBRE".'])->withInput();
-        }
+            $linea  = 1; // encabezado
+            foreach ($rows as $row) {
+                $linea++;
 
-        $creados = 0; $actualizados = 0; $omitidos = 0; $notificados = 0; $errores = [];
-        $linea = 1; // cabecera
+                $id         = $this->nv($row, ['id','user_id']);
+                $nombre     = $this->nv($row, ['nombre','name']);
+                $correo     = $this->nv($row, ['correo','email','correo_e']);
+                $correo     = $correo !== null ? strtolower((string)$correo) : null;
+                $contrasena = $this->nv($row, ['contrasena','contraseña','password','pass']);
+                $rolesTxt   = $this->nv($row, ['roles']);
 
-        while (($row = $this->leerLineaCsv($fh, $delim)) !== false) {
-            $linea++;
+                if (empty($id) && empty($correo)) { $contadores['omitidos']++; $errores[] = "Fila {$linea}: sin 'ID' ni 'CORREO'."; continue; }
+                if (empty($nombre)) { $contadores['omitidos']++; $errores[] = "Fila {$linea}: falta 'NOMBRE'."; continue; }
+                if (!empty($correo) && !filter_var($correo, FILTER_VALIDATE_EMAIL)) { $contadores['omitidos']++; $errores[] = "Fila {$linea}: correo inválido '{$correo}'."; continue; }
 
-            // Extrae valores por índice
-            $id          = $this->val($row, $map['id'] ?? null);
-            $nombre      = $this->val($row, $map['nombre'] ?? null);
-            $correo      = $this->val($row, $map['correo'] ?? null);
-            $contrasena  = $this->val($row, $map['contraseña'] ?? null);
-
-            // Normalizaciones
-            $nombre = $nombre ? trim($nombre) : null;
-            $correo = $correo ? strtolower(trim($correo)) : null;
-
-            // Validaciones mínimas
-            if (empty($id) && empty($correo)) {
-                $omitidos++; $errores[] = "Línea {$linea}: sin 'ID' ni 'CORREO'.";
-                continue;
+                // ← PASA UNA VARIABLE por referencia
+                $this->upsertUsuario(
+                    id: $id,
+                    nombre: $nombre,
+                    correo: $correo,
+                    contrasena: $contrasena,
+                    rolesTxt: $rolesTxt,
+                    contadores: $contadores,
+                    errores: $errores,
+                    linea: $linea
+                );
             }
-            if (empty($nombre)) {
-                $omitidos++; $errores[] = "Línea {$linea}: falta 'NOMBRE'.";
-                continue;
+        } else {
+            // ---- CSV/TXT ----
+            $path  = $file->getRealPath();
+            $delim = $this->detectarDelimitador($path);
+            $fh    = fopen($path, 'r');
+            if (!$fh) {
+                return back()->withErrors(['archivo' => 'No se pudo leer el archivo subido.'])->withInput();
             }
-            if (!empty($correo) && !filter_var($correo, FILTER_VALIDATE_EMAIL)) {
-                $omitidos++; $errores[] = "Línea {$linea}: CORREO inválido '{$correo}'.";
-                continue;
+            $header = $this->leerLineaCsv($fh, $delim);
+            if (!$header) {
+                return back()->withErrors(['archivo' => 'El archivo está vacío o sin cabecera.'])->withInput();
+            }
+            $map = $this->mapearCabecera($header);
+
+            if (!isset($map['correo']) && !isset($map['id'])) {
+                return back()->withErrors(['archivo' => 'La cabecera debe incluir al menos "CORREO" o "ID".'])->withInput();
+            }
+            if (!isset($map['nombre'])) {
+                return back()->withErrors(['archivo' => 'La cabecera debe incluir "NOMBRE".'])->withInput();
             }
 
-            try {
-                DB::beginTransaction();
+            $linea = 1;
+            while (($row = $this->leerLineaCsv($fh, $delim)) !== false) {
+                $linea++;
 
-                /** @var \App\Models\User|null $user */
-                $user = null;
+                $id         = $this->val($row, $map['id'] ?? null);
+                $nombre     = $this->val($row, $map['nombre'] ?? null);
+                $correo     = $this->val($row, $map['correo'] ?? null);
+                $correo     = $correo !== null ? strtolower(trim((string)$correo)) : null;
+                $contrasena = $this->val($row, $map['contraseña'] ?? null);
+                $rolesTxt   = $this->val($row, $map['roles'] ?? null);
 
-                if (!empty($id) && ctype_digit((string)$id)) {
-                    $user = User::find((int)$id);
-                }
-                if (!$user && !empty($correo)) {
-                    $user = User::where('email', $correo)->first();
-                }
+                $nombre = $nombre ? trim($nombre) : null;
 
-                $debeNotificar = false;
-                $passwordPlano = null;
+                if (empty($id) && empty($correo)) { $contadores['omitidos']++; $errores[] = "Línea {$linea}: sin 'ID' ni 'CORREO'."; continue; }
+                if (empty($nombre)) { $contadores['omitidos']++; $errores[] = "Línea {$linea}: falta 'NOMBRE'."; continue; }
+                if (!empty($correo) && !filter_var($correo, FILTER_VALIDATE_EMAIL)) { $contadores['omitidos']++; $errores[] = "Línea {$linea}: CORREO inválido '{$correo}'."; continue; }
 
-                if ($user) {
-                    // Actualiza nombre; si viene CONTRASEÑA explícita, también la cambia
-                    $user->name = $nombre;
-                    if (!empty($contrasena)) {
-                        $user->password = $contrasena; // model cast 'hashed' la encripta
-                        // Por seguridad, NO enviamos email cuando la proporcionan explícitamente
-                    }
-                    $user->save();
-                    $actualizados++;
-                } else {
-                    // Crear nuevo. Si no hay contraseña, generar temporal y NOTIFICAR.
-                    $user = new User();
-                    $user->name  = $nombre;
-                    $user->email = $correo; // requerido para alta
-
-                    if (!empty($contrasena)) {
-                        $user->password = $contrasena;
-                    } else {
-                        $passwordPlano  = Str::random(12);
-                        $user->password = $passwordPlano;
-                        $debeNotificar  = !empty($correo); // solo si se tiene correo válido
-                    }
-
-                    $user->save();
-                    $creados++;
-
-                    if ($debeNotificar) {
-                        Mail::to($user->email)->send(new CredencialesGeneradas(
-                            nombre: $user->name,
-                            email:  $user->email,
-                            passwordPlano: $passwordPlano,
-                            urlLogin: route('login', absolute: false) // si tienes route('login')
-                        ));
-                        $notificados++;
-                    }
-                }
-
-                DB::commit();
-            } catch (\Throwable $e) {
-                DB::rollBack();
-                $omitidos++;
-                $errores[] = "Línea {$linea}: ".$e->getMessage();
+                // ← PASA UNA VARIABLE por referencia
+                $this->upsertUsuario(
+                    id: $id,
+                    nombre: $nombre,
+                    correo: $correo,
+                    contrasena: $contrasena,
+                    rolesTxt: $rolesTxt,
+                    contadores: $contadores,
+                    errores: $errores,
+                    linea: $linea
+                );
             }
+
+            fclose($fh);
         }
-
-        fclose($fh);
-
-        // Bitácora del proceso
-        $this->logBitacora($request, [
-            'accion'         => 'IMPORTAR_USUARIOS',
-            'modulo'         => 'USUARIOS',
-            'tabla_afectada' => 'users',
-            'registro_id'    => null,
-            'descripcion'    => "Importación de usuarios por lote (CSV).",
-            'id_gestion'     => $data['id_gestion'] ?? null,
-            'metadata'       => [
-                'resumen'  => compact('creados','actualizados','omitidos','notificados'),
-                'errores'  => array_slice($errores, 0, 50),
-                'archivo'  => [
-                    'mime'       => $request->file('archivo')->getClientMimeType(),
-                    'size_bytes' => $request->file('archivo')->getSize(),
-                    'delimitador'=> $delim,
-                ],
-                'cabeceras' => $header,
-            ],
-        ]);
-
-        // Vista de resultado (puedes mostrar tabla con errores, etc.)
-        $reporte = compact('creados','actualizados','omitidos','notificados','errores');
-        return view('usuarios.import.result', compact('reporte'));
+    } catch (\Throwable $e) {
+        return back()->withErrors(['archivo' => $e->getMessage()])->withInput();
     }
 
-    /* ========================= Helpers ========================= */
+    // Bitácora (usa los contadores ya mutados)
+    $this->logBitacora($request, [
+        'accion'         => 'IMPORTAR_USUARIOS',
+        'modulo'         => 'USUARIOS',
+        'tabla_afectada' => 'users',
+        'registro_id'    => null,
+        'descripcion'    => "Importación de usuarios por lote (Excel/CSV).",
+        'id_gestion'     => $data['id_gestion'] ?? null,
+        'metadata'       => [
+            'resumen'  => $contadores,
+            'errores'  => array_slice($errores, 0, 50),
+            'archivo'  => [
+                'mime'       => $file->getClientMimeType(),
+                'size_bytes' => $file->getSize(),
+                'ext'        => $ext,
+            ],
+        ],
+    ]);
 
-    /** Detecta delimitador probable: ',', ';' o "\t". */
+    $reporte = array_merge($contadores, ['errores' => $errores]);
+    return view('usuarios.import.result', compact('reporte'));
+}
+
+
+    /* ======================= Helpers ======================= */
+
+    /** Normaliza/obtiene valor por múltiples posibles keys en colecciones Excel. */
+    private function nv($row, array $keys): ?string
+    {
+        foreach ($keys as $k) {
+            if (isset($row[$k]) && $row[$k] !== '') {
+                return is_string($row[$k]) ? trim($row[$k]) : (string)$row[$k];
+            }
+        }
+        return null;
+    }
+
+    /** Upsert + asignación opcional de roles (ROLES separados por ';') */
+    private function upsertUsuario($id, $nombre, $correo, $contrasena, $rolesTxt, array &$contadores, array &$errores, int $linea): void
+    {
+        try {
+            DB::beginTransaction();
+
+            $user = null;
+            if (!empty($id) && ctype_digit((string)$id)) {
+                $user = User::find((int)$id);
+            }
+            if (!$user && !empty($correo)) {
+                $user = User::where('email', $correo)->first();
+            }
+
+            $debeNotificar = false;
+            $passwordPlano = null;
+
+            if ($user) {
+                $user->name = $nombre;
+                if (!empty($contrasena)) {
+                    $user->password = $contrasena; // cast hashed
+                }
+                $user->save();
+                $contadores['actualizados']++;
+            } else {
+                $user = new User();
+                $user->name  = $nombre;
+                $user->email = $correo;
+
+                if (!empty($contrasena)) {
+                    $user->password = $contrasena;
+                } else {
+                    $passwordPlano  = Str::random(12);
+                    $user->password = $passwordPlano;
+                    $debeNotificar  = !empty($correo);
+                }
+
+                $user->save();
+                $contadores['creados']++;
+
+                if ($debeNotificar) {
+                    Mail::to($user->email)->send(new CredencialesGeneradas(
+                        nombre: $user->name,
+                        email:  $user->email,
+                        passwordPlano: $passwordPlano,
+                        urlLogin: route('login', absolute: false)
+                    ));
+                    $contadores['notificados']++;
+                }
+            }
+
+            // ROLES opcional (si viene -> REEMPLAZA roles del usuario)
+            if (!empty($rolesTxt)) {
+                $nombres = array_values(array_filter(array_map('trim', preg_split('/[;,\|]+/', (string)$rolesTxt))));
+                if (!empty($nombres)) {
+                    // Solo roles existentes (no creamos nuevos aquí)
+                    $validos = Role::query()->whereIn('name', $nombres)->pluck('name')->all();
+                    $user->syncRoles($validos);
+                }
+            }
+
+            DB::commit();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            $contadores['omitidos']++;
+            $errores[] = "Fila {$linea}: ".$e->getMessage();
+        }
+    }
+
+    /** ====== Tus helpers CSV originales (con soporte a 'roles') ====== */
+
     private function detectarDelimitador(string $path): string
     {
         $sample = file_get_contents($path, false, null, 0, 4096) ?: '';
@@ -216,42 +265,30 @@ class UsuariosImportController extends Controller
         return $top ?: ',';
     }
 
-    /** Lee una línea CSV con fgetcsv manejando BOM. */
     private function leerLineaCsv($fh, string $delim)
     {
         $row = fgetcsv($fh, 0, $delim);
         if ($row === false) return false;
-
-        // Remover BOM UTF-8 del primer campo si existe
         if (isset($row[0])) {
             $row[0] = preg_replace('/^\xEF\xBB\xBF/', '', (string)$row[0]);
         }
         return $row;
     }
 
-    /**
-     * Mapea cabeceras a índices con prioridad a español:
-     *  - id → ID, (admite: "id","user_id")
-     *  - nombre → NOMBRE, (admite: "name")
-     *  - correo → CORREO, (admite: "email","correo_e")
-     *  - contraseña → CONTRASEÑA, (admite: "contrasena","password","pass")
-     */
     private function mapearCabecera(array $header): array
     {
         $map = [];
         foreach ($header as $i => $col) {
             $key = $this->normalizarCabecera($col);
-
             if (in_array($key, ['id','user_id'], true))                     $map['id'] = $i;
             if (in_array($key, ['nombre','name'], true))                    $map['nombre'] = $i;
             if (in_array($key, ['correo','email','correo_e'], true))        $map['correo'] = $i;
-            if (in_array($key, ['contraseña','contrasena','password','pass'], true))
-                $map['contraseña'] = $i;
+            if (in_array($key, ['contraseña','contrasena','password','pass'], true)) $map['contraseña'] = $i;
+            if (in_array($key, ['roles','rol'], true))                      $map['roles'] = $i; // NUEVO
         }
         return $map;
     }
 
-    /** Normaliza nombres de columna: minúsculas, sin acentos, guiones/espacios → '_' */
     private function normalizarCabecera(?string $s): string
     {
         $s = strtolower(trim((string)$s));
@@ -262,7 +299,6 @@ class UsuariosImportController extends Controller
         return $s ?? '';
     }
 
-    /** Obtiene valor trimmed por índice; null si no existe. */
     private function val(array $row, ?int $idx): ?string
     {
         if ($idx === null) return null;
