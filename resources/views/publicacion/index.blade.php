@@ -458,6 +458,18 @@
                                         </svg>
                                         Publicar (Pendiente)
                                     </button>
+                                    
+                                    {{-- Botón especial para Admin DTIC para forzar publicación --}}
+                                    @role('Admin DTIC')
+                                        <button onclick="openForcePublishModal({{ $gestion->id_gestion }}, '{{ $gestion->nombre }}')"
+                                                class="px-6 py-3 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white rounded-lg transition flex items-center gap-2 font-bold border-2 border-orange-400">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                            </svg>
+                                            Forzar Publicación
+                                        </button>
+                                    @endrole
+                                    
                                     <p class="text-sm text-slate-400">
                                         Se requiere que todas las aprobaciones estén en estado "Aprobado Final"
                                     </p>
@@ -556,6 +568,85 @@
         </div>
     </div>
 
+    <!-- Modal Forzar Publicación (Solo Admin DTIC) -->
+    <div id="forcePublishModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 items-center justify-center p-4" style="display: none;">
+        <div class="bg-slate-800 rounded-lg shadow-2xl border border-orange-700 max-w-md w-full">
+            <div class="px-6 py-4 bg-gradient-to-r from-orange-900 to-red-900 border-b border-orange-700">
+                <h3 class="text-lg font-semibold text-white flex items-center gap-2">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                    ⚠️ Forzar Publicación
+                </h3>
+            </div>
+            
+            <form id="forcePublishForm" method="POST" class="p-6">
+                @csrf
+                <input type="hidden" name="forzar" value="1">
+                
+                <div class="mb-6">
+                    <div class="bg-red-900/20 border border-red-700/50 rounded-lg p-4 mb-4">
+                        <div class="flex gap-3">
+                            <svg class="w-6 h-6 text-red-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                            </svg>
+                            <div>
+                                <p class="text-red-300 font-bold mb-2">
+                                    ADVERTENCIA: Publicación Forzada
+                                </p>
+                                <p class="text-sm text-red-200/80 mb-2">
+                                    Estás a punto de publicar la gestión <span id="forceGestionNombre" class="font-bold"></span> 
+                                    <strong>SIN TODAS LAS APROBACIONES COMPLETAS</strong>.
+                                </p>
+                                <p class="text-xs text-red-200/70">
+                                    Esta acción solo debe usarse en casos excepcionales y quedará registrada en la bitácora.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-orange-900/20 border border-orange-700/50 rounded-lg p-4">
+                        <p class="text-sm text-orange-300 mb-2">
+                            <strong>Motivos válidos para forzar:</strong>
+                        </p>
+                        <ul class="text-xs text-orange-200/80 space-y-1">
+                            <li>• Urgencia académica por inicio de clases</li>
+                            <li>• Aprobación verbal de autoridades</li>
+                            <li>• Situaciones de contingencia</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-slate-300 mb-2">
+                        <span class="text-red-400">*</span> Justificación requerida
+                    </label>
+                    <textarea name="nota" 
+                              rows="3"
+                              required
+                              placeholder="Explique el motivo de forzar la publicación sin aprobaciones completas..."
+                              class="w-full rounded-lg bg-slate-700 border-slate-600 text-slate-200 placeholder-slate-500"></textarea>
+                    <p class="text-xs text-slate-400 mt-1">Esta justificación será registrada permanentemente</p>
+                </div>
+
+                <div class="flex justify-end gap-3 pt-4 border-t border-slate-700">
+                    <button type="button" 
+                            onclick="closeModal('forcePublishModal')"
+                            class="px-6 py-2.5 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg transition font-medium">
+                        Cancelar
+                    </button>
+                    <button type="submit"
+                            class="px-6 py-2.5 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white rounded-lg transition font-bold flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                        Forzar Publicación
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         function toggleDetails(gestionId) {
             const details = document.getElementById(`details-${gestionId}`);
@@ -576,6 +667,12 @@
             document.getElementById('publicarModal').style.display = 'flex';
         }
 
+        function openForcePublishModal(idGestion, nombre) {
+            document.getElementById('forcePublishForm').action = `/admin/publicacion/${idGestion}/publicar`;
+            document.getElementById('forceGestionNombre').textContent = nombre;
+            document.getElementById('forcePublishModal').style.display = 'flex';
+        }
+
         function closeModal(id) {
             document.getElementById(id).style.display = 'none';
         }
@@ -583,6 +680,7 @@
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 closeModal('publicarModal');
+                closeModal('forcePublishModal');
             }
         });
 

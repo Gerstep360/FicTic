@@ -14,7 +14,7 @@ class DocentesSeeder extends Seeder
     /**
      * Cambia la cantidad si necesitas más/menos docentes.
      */
-    public int $cantidad = 10;
+    public int $cantidad = 50;
 
     public function run(): void
     {

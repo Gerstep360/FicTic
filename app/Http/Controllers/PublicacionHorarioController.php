@@ -127,31 +127,40 @@ class PublicacionHorarioController extends Controller
                 ->with('warning', 'Esta gestión ya está publicada.');
         }
 
-        if (!$gestion->puede_publicar) {
+        // Admin DTIC puede forzar publicación
+        $esForzada = $request->has('forzar') && auth()->user()->hasRole('Admin DTIC');
+        
+        if (!$gestion->puede_publicar && !$esForzada) {
             return redirect()
                 ->back()
-                ->with('error', 'No se puede publicar. Existen aprobaciones pendientes.');
+                ->with('error', 'No se puede publicar. Existen aprobaciones pendientes. Si eres Admin DTIC, puedes forzar la publicación.');
         }
 
         $validated = $request->validate([
             'nota' => ['nullable', 'string', 'max:500'],
+            'forzar' => ['nullable', 'boolean'],
         ]);
 
         $gestion->publicar(auth()->id(), $validated['nota'] ?? null);
+
+        $mensaje = $esForzada 
+            ? 'Horarios publicados FORZADAMENTE (había aprobaciones pendientes).' 
+            : 'Horarios publicados exitosamente.';
 
         $this->logBitacora($request, [
             'accion' => 'publicar',
             'modulo' => 'Publicación de Horarios',
             'tabla_afectada' => 'gestiones',
             'registro_id' => $gestion->id_gestion,
-            'descripcion' => "Gestión publicada: {$gestion->nombre}",
+            'descripcion' => "Gestión publicada: {$gestion->nombre}" . ($esForzada ? ' (FORZADA)' : ''),
             'id_gestion' => $gestion->id_gestion,
             'exitoso' => true,
+            'metadata' => ['forzada' => $esForzada],
         ]);
 
         return redirect()
             ->back()
-            ->with('success', 'Horarios publicados exitosamente.');
+            ->with('success', $mensaje);
     }
 
     /**
