@@ -122,7 +122,14 @@
                                                 {{ $suplencia->docenteAusente->name }}
                                             </td>
                                             <td class="px-6 py-4 text-sm">
-                                                <span class="font-semibold text-blue-600 dark:text-blue-400">{{ $suplencia->docenteSuplente->name }}</span>
+                                                <div class="flex items-center gap-2">
+                                                    <span class="font-semibold text-blue-600 dark:text-blue-400">
+                                                        {{ $suplencia->nombre_suplente }}
+                                                    </span>
+                                                    @if($suplencia->id_docente_externo)
+                                                        <span class="text-xs text-gray-500 dark:text-gray-400 italic">(externo)</span>
+                                                    @endif
+                                                </div>
                                             </td>
                                             <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
                                                 {{ $suplencia->horario->grupo->materia->nombre ?? 'N/A' }}

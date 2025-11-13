@@ -12,107 +12,108 @@ use App\Models\User;
 class PopularFICCTGruposSeeder extends Seeder
 {
     /**
-     * Catálogo: materia => [grupos...]
-     * Toma los códigos más frecuentes que compartiste.
-     * Puedes ampliar/reducir libremente este array.
+     * Catálogo REDUCIDO a 2-3 grupos por materia para evitar saturación.
+     * Con ~28 aulas disponibles, este tamaño permite horarios realistas sin solapamientos críticos.
      */
     private array $catalogo = [
-        // 1er semestre
-        'FIS100' => ['SA','SB','SC','SD','SG','SI','SP','Z1','Z2','Z3','Z4','Z5','Z6','I1','W1'],
-        'INF110' => ['SA','SB','SC','SD','SF','SG','SH','SI','SN','SS','SZ','Z1','Z2','Z3','Z4','Z6','W1'],
-        'INF119' => ['SE','SF','SG','SH','SK','Z1','Z2','Z3','Z6'],
-        'LIN100' => ['NW','SB','Z1','Z2','Z3','Z4','Z5','Z6'],
-        'MAT101' => ['F1','SB','SG','SI','SP','SZ','Z1','Z2','Z3','Z6','I2','W1','CI'],
+        // ===== 1er semestre (Tronco) =====
+        'FIS100' => ['SA','SB','Z1'],           // 3 grupos
+        'INF110' => ['SA','SB','Z1'],           // 3 grupos
+        'INF119' => ['SA','Z1'],                // 2 grupos
+        'LIN100' => ['SA','Z1'],                // 2 grupos
+        'MAT101' => ['SA','SB','Z1'],           // 3 grupos
 
-        // 2do semestre
-        'FIS102' => ['BI','NW','NX','SA','SB','R1'],
-        'INF120' => ['SA','SB','SF','SH','SC','SD','SG','SI'],
-        'LIN101' => ['SB','SE','SC','SZ'],
-        'MAT102' => ['I1','SN','SB','SD','SH','R1','C1'],
-        'MAT103' => ['SA','SB','SC','SD','SF','SE'],
+        // ===== 2do semestre (Tronco) =====
+        'FIS102' => ['SA','SB'],                // 2 grupos
+        'INF120' => ['SA','SB','Z1'],           // 3 grupos
+        'LIN101' => ['SA','SB'],                // 2 grupos
+        'MAT102' => ['SA','SB'],                // 2 grupos
+        'MAT103' => ['SA','SB','Z1'],           // 3 grupos
 
-        // 3ro
-        'ADM100' => ['SA','SC'],
-        'FIS200' => ['SA','SB','SC'],
-        'INF210' => ['SA','SB','SC','SD','SI'],
-        'INF211' => ['SA','SB'],
-        'NAT207' => ['NX','NW'],
-        'MAT207' => ['SA','SC'],
+        // ===== 3er semestre (Tronco) =====
+        'ADM100' => ['SA','SB'],                // 2 grupos
+        'FIS200' => ['SA','SB'],                // 2 grupos
+        'INF210' => ['SA','SB','Z1'],           // 3 grupos
+        'INF211' => ['SA','SB'],                // 2 grupos
+        'MAT207' => ['SA','SB'],                // 2 grupos
+        // Optativas para habilitar ruta Redes
+        'ELT241' => ['SA'],                     // 1 grupo
+        'RDS210' => ['SA','SB'],                // 2 grupos
 
-        // 4to
-        'ADM200' => ['SA','SB'],
-        'INF220' => ['SA','SB','SD','I2'],
-        'INF221' => ['SA','SB','SC','SX'],
-        'MAT202' => ['SC','SB','SI'],
-        'MAT205' => ['SC','SD','SE'],
-        'ELC102' => ['SA'],
+        // ===== 4to semestre (Tronco) =====
+        'ADM200' => ['SA','SB'],                // 2 grupos
+        'INF220' => ['SA','SB'],                // 2 grupos
+        'INF221' => ['SA','SB','Z1'],           // 3 grupos
+        'MAT202' => ['SA','SB'],                // 2 grupos
+        'MAT205' => ['SA','SB'],                // 2 grupos
+        'RDS220' => ['SA'],                     // 1 grupo
 
-        // 5to
-        'INF310' => ['SA','SB','SX'],
-        'INF312' => ['SA','SC'],
-        'INF318' => ['SA'],
-        'INF319' => ['SA'],
-        'MAT302' => ['SI','SB'],
-        'ADM330' => ['SA','SC'],
-        'ECO300' => ['SA','SB'],
+        // ===== 5to semestre (Rutas) =====
+        'INF310' => ['SA','SB'],                // 2 grupos (INF/SIS)
+        'INF312' => ['SA','SB'],                // 2 grupos (INF/SIS)
+        'INF318' => ['SA'],                     // 1 grupo (INF)
+        'INF319' => ['SA'],                     // 1 grupo (INF)
+        'MAT302' => ['SA','SB'],                // 2 grupos (INF/SIS/RED)
+        'ADM330' => ['SA'],                     // 1 grupo (SIS)
+        'ECO300' => ['SA'],                     // 1 grupo (SIS)
+        'ELT352' => ['R1'],                     // 1 grupo (RED)
+        'ELT354' => ['R1'],                     // 1 grupo (RED)
+        'RDS310' => ['SA'],                     // 1 grupo (RED)
 
-        // 6to
-        'ELC103' => ['SA'],
-        'INF322' => ['SB','SD'],
-        'INF329' => ['SA'],
-        'INF323' => ['SA','SC'],
-        'INF342' => ['SA','SC'],
-        'MAT329' => ['SB','SZ','SS'],
-        'ELC005' => ['SA'],
-        'ADM320' => ['SA','SC'],
+        // ===== 6to semestre (Rutas) =====
+        'INF322' => ['SA','SB'],                // 2 grupos (INF/SIS/RED)
+        'INF323' => ['SA','SB'],                // 2 grupos (INF/SIS/RED)
+        'INF329' => ['SA'],                     // 1 grupo (INF)
+        'INF342' => ['SA','SB'],                // 2 grupos (INF/SIS)
+        'MAT329' => ['SA','SB'],                // 2 grupos (INF/SIS/RED)
+        'ADM320' => ['SA'],                     // 1 grupo (SIS)
+        'ELC103' => ['SA'],                     // 1 grupo (Electiva INF)
+        'ELC104' => ['SA'],                     // 1 grupo (Electiva INF)
+        'ELT362' => ['R1'],                     // 1 grupo (RED)
+        'RDS320' => ['SA'],                     // 1 grupo (RED)
 
-        // 7mo
-        'INF412' => ['SA','SB'],
-        'INF413' => ['SA','SB'],
-        'INF418' => ['SA'],
-        'INF432' => ['SA'],
-        'INF433' => ['SA','SC'],
-        'MAT419' => ['SA','SC'],
-        'ELC106' => ['SA'],
+        // ===== 7mo semestre =====
+        'INF412' => ['SA','SB'],                // 2 grupos (INF)
+        'INF413' => ['SA','SB'],                // 2 grupos (INF)
+        'INF418' => ['SA'],                     // 1 grupo (INF)
+        'INF433' => ['SA','SB'],                // 2 grupos (INF)
+        'MAT419' => ['SA'],                     // 1 grupo (INF/SIS/RED)
+        'INF432' => ['SA'],                     // 1 grupo (SIS)
+        'ELT374' => ['R1'],                     // 1 grupo (RED)
+        'RDS410' => ['SA'],                     // 1 grupo (RED)
 
-        // 8vo
-        'ECO449' => ['SA','SI'],
-        'ELC008' => ['SA'],
-        'ELC107' => ['SA','I2'],
-        'INF422' => ['SB','SC'],
-        'INF423' => ['SC','R1'],
-        'INF428' => ['SB'],
-        'INF442' => ['SA','SI'],
-        'INF462' => ['SA'],
+        // ===== 8vo semestre =====
+        'ECO449' => ['SA'],                     // 1 grupo (INF/SIS/RED)
+        'INF422' => ['SA','SB'],                // 2 grupos (INF/SIS)
+        'INF423' => ['SA'],                     // 1 grupo (INF/RED)
+        'INF428' => ['SA'],                     // 1 grupo (INF)
+        'INF442' => ['SA','SB'],                // 2 grupos (INF/SIS)
+        'INF462' => ['SA'],                     // 1 grupo (SIS)
+        'ELT384' => ['R1'],                     // 1 grupo (RED)
+        'RDS421' => ['SA'],                     // 1 grupo (RED)
+        'RDS429' => ['SA'],                     // 1 grupo (RED)
 
-        // 9no
-        'INF511' => ['SA','SC','SS'],
-        'INF512' => ['SB'],
-        'INF513' => ['SA','SC'],
-        'INF552' => ['SA'],
+        // ===== 9no semestre =====
+        'INF511' => ['SA','SB'],                // 2 grupos (INF/SIS/RED)
+        'INF512' => ['SA'],                     // 1 grupo (INF/SIS)
+        'INF513' => ['SA','SB'],                // 2 grupos (INF/SIS/RED)
+        'INF552' => ['SA'],                     // 1 grupo (INF/SIS)
+        'ELC105' => ['SA'],                     // 1 grupo (Electiva)
+        'ELC107' => ['SA'],                     // 1 grupo (Electiva)
 
-        // Extra (redes/electrónica – opcional, coméntalos si no aplica)
-        'RDS210' => ['SA','SB'],
-        'RDS220' => ['SZ'],
-        'RDS320' => ['SA'],
-        'RDS421' => ['SA'],
-        'RDS429' => ['SA'],
-        'RDS511' => ['SA'],
-        'RDS512' => ['SA'],
-        'ELT241' => ['SC'],
-        'ELT352' => ['ER'],
-        'ELT374' => ['SR'],
-        'ELT354' => ['R1'],
-        'ELT362' => ['R1'],
-        'ELC201' => ['SA'],
-        'ELC203' => ['R1'],
-        'ELC204' => ['SR'],
+        // ===== 10mo semestre =====
+        'INF521' => ['SA','SB'],                // 2 grupos (INF/SIS/RED)
+        'ELC106' => ['SA'],                     // 1 grupo (Electiva)
+        'ELC101' => ['SA'],                     // 1 grupo (Electiva)
+        'ELC102' => ['SA'],                     // 1 grupo (Electiva)
+        'ELC108' => ['SA'],                     // 1 grupo (Electiva)
+        'ELC209' => ['SA'],                     // 1 grupo (Electiva RED)
+        'ELC210' => ['SA'],                     // 1 grupo (Electiva RED)
     ];
 
-   private string $defaultTurno = 'Mañana';
     private string $defaultModalidad = 'Presencial';
-    private int    $defaultCupo = 40;
-    
+    private int    $defaultCupo      = 40;
+
     /** Cambia a false si NO quieres asignar docentes en este seeder */
     private bool $asignarDocentes = true;
 
@@ -122,11 +123,11 @@ class PopularFICCTGruposSeeder extends Seeder
 
         // ---- Pool de docentes existentes (IDs) ----
         $docenteIds = $this->asignarDocentes
-            ? User::role('Docente')->pluck('id')->all()
+            ? (User::role('Docente')->pluck('id')->all() ?? [])
             : [];
 
         if ($this->asignarDocentes && empty($docenteIds)) {
-            $this->command->warn('⚠️  No hay usuarios con rol Docente. Se crearán los grupos sin docente.');
+            $this->command?->warn('⚠️  No hay usuarios con rol Docente. Se crearán los grupos sin docente.');
         }
 
         // Rueda round-robin para repartir docentes
@@ -140,51 +141,69 @@ class PopularFICCTGruposSeeder extends Seeder
 
         $nuevos = 0;
         $actualizados = 0;
-        
-        foreach ($this->catalogo as $codigoMateria => $grupos) {
-            // Puedes tener la misma materia en más de una carrera; recorremos todas.
-            $materias = Materia::where('codigo', $codigoMateria)->get();
 
-            if ($materias->isEmpty()) {
-                $this->command->warn("⚠️  Materia {$codigoMateria} no existe. (Se omite)");
+        foreach ($this->catalogo as $codigoMateria => $grupos) {
+            // IMPORTANTE: Tronco común aparece en 3 carreras, pero solo necesitamos 1 set de grupos
+            // Para evitar duplicación, tomamos SOLO la primera materia encontrada
+            $materia = Materia::where('codigo', $codigoMateria)->first();
+
+            if (!$materia) {
+                $this->command->warn("⚠️  Materia {$codigoMateria} no existe (se omite).");
                 continue;
             }
 
-            foreach ($materias as $materia) {
-                foreach ($grupos as $nombre) {
-                    // Intenta crear
-                    $grupo = Grupo::firstOrCreate(
-                        [
-                            'id_materia'   => $materia->id_materia,
-                            'id_gestion'   => $gestionId,
-                            'nombre_grupo' => $nombre,
-                            
-                        ],
-                        [
-                            'turno'      => $this->defaultTurno,
-                            'modalidad'  => $this->defaultModalidad,
-                            'cupo'       => $this->defaultCupo,
-                            'id_docente' => $pickDocente(),
-                            
-                        ]
-                    );
+            foreach ($grupos as $nombre) {
+                $turno = $this->inferirTurno($nombre);
 
-                    if ($grupo->wasRecentlyCreated) {
-                        $nuevos++;
-                    } else {
-                        // Si ya existía pero NO tenía docente, se lo asignamos ahora
-                        if (is_null($grupo->id_docente)) {
-                            $grupo->update(['id_docente' => $pickDocente()]);
-                            $actualizados++;
-                        }
+                $grupo = Grupo::firstOrCreate(
+                    [
+                        'id_materia'   => $materia->id_materia,
+                        'id_gestion'   => $gestionId,
+                        'nombre_grupo' => $nombre,
+                    ],
+                    [
+                        'turno'      => $turno,
+                        'modalidad'  => $this->defaultModalidad,
+                        'cupo'       => $this->defaultCupo,
+                        'id_docente' => $pickDocente(),
+                    ]
+                );
+
+                if ($grupo->wasRecentlyCreated) {
+                    $nuevos++;
+                } else {
+                    // Completa datos faltantes si aplica
+                    $updates = [];
+                    if (is_null($grupo->id_docente)) {
+                        $updates['id_docente'] = $pickDocente();
+                    }
+                    if (empty($grupo->turno)) {
+                        $updates['turno'] = $turno;
+                    }
+                    if ($updates) {
+                        $grupo->update($updates);
+                        $actualizados++;
                     }
                 }
-
-                $this->command->info("✅ {$codigoMateria} ({$materia->nombre}) → grupos asegurados para gestión #{$gestionId}.");
             }
+
+            $this->command->info("✅ {$codigoMateria} ({$materia->nombre}) → " . count($grupos) . " grupos para gestión #{$gestionId}.");
         }
 
-        $this->command->info("🎉 PopularFICCTGruposSeeder listo. Nuevos: {$nuevos} · Con docente asignado en existentes: {$actualizados}");
+        $this->command->info("🎉 PopularFICCTGruposSeeder listo. Nuevos: {$nuevos} · Actualizados: {$actualizados}");
+    }
+
+    /**
+     * Infieren turno por prefijo de grupo (ajústalo a tu convención real).
+     */
+    private function inferirTurno(string $grupo): string
+    {
+        $g = strtoupper($grupo);
+        if (str_starts_with($g, 'N')) return 'Noche';           // N*, NX, NW...
+        if (str_starts_with($g, 'I')) return 'Tarde';           // I1, I2...
+        if (str_starts_with($g, 'Z')) return 'Fines de semana'; // Z1..Z6
+        if (str_starts_with($g, 'W')) return 'Virtual';         // W1
+        return 'Mañana';                                        // S*, R1, CI, etc.
     }
 
     /**

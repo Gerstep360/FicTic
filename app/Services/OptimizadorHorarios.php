@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Motor de optimización para generación automática de horarios
- * Implementa algoritmo de backtracking con restricciones
+ * Implementa algoritmo sistemático con patrones realistas
  */
 class OptimizadorHorarios
 {
@@ -28,7 +28,14 @@ class OptimizadorHorarios
     protected $horasAsignadasDocente = []; // [docente_id] => count
     protected $cargasDocentes = []; // [docente_id] => CargaDocente
     protected $intentos = 0;
-    protected $maxIntentos = 10000;
+    protected $maxIntentos = 50000;
+    protected $patronesDias = [
+        'lun_mie_vie' => [1, 3, 5], // Lunes, Miércoles, Viernes
+        'mar_jue' => [2, 4],         // Martes, Jueves
+        'mar_jue_sab' => [2, 4, 6],  // Martes, Jueves, Sábado (raro)
+        'sabado' => [6],             // Solo sábado (muy raro)
+    ];
+    protected $aulaIndex = 0; // Para rotación de aulas
 
     public function __construct($idGestion, $idCarrera = null, $configuracion = [])
     {
@@ -127,7 +134,7 @@ class OptimizadorHorarios
     }
 
     /**
-     * Intenta asignar un grupo a un horario válido
+     * Intenta asignar un grupo a un horario válido usando patrones realistas
      */
     protected function asignarGrupo($grupo)
     {
@@ -135,35 +142,118 @@ class OptimizadorHorarios
             return false; // No se puede asignar sin docente
         }
 
-        // Calcular cuántas horas necesita el grupo (asumiendo que cada grupo necesita ciertas horas semanales)
-        // Por defecto: 2 sesiones de 2 horas cada una (ajustar según tu lógica)
+        // Seleccionar patrón de días (prioritariamente Lun-Mie-Vie y Mar-Jue)
+        $patronesPreferidos = [
+            ['dias' => $this->patronesDias['lun_mie_vie'], 'peso' => 50], // 50% probabilidad
+            ['dias' => $this->patronesDias['mar_jue'], 'peso' => 40],      // 40% probabilidad
+            ['dias' => $this->patronesDias['mar_jue_sab'], 'peso' => 7],   // 7% probabilidad
+            ['dias' => $this->patronesDias['sabado'], 'peso' => 3],        // 3% probabilidad
+        ];
+
+        // Probar cada patrón hasta encontrar uno que funcione
+        foreach ($patronesPreferidos as $patron) {
+            $diasPatron = $patron['dias'];
+            $exito = $this->intentarAsignarConPatron($grupo, $diasPatron);
+            
+            if ($exito) {
+                return true;
+            }
+        }
+
+        // Si ningún patrón funcionó, intentar asignación individual en cualquier día
+        return $this->intentarAsignacionIndividual($grupo);
+    }
+
+    /**
+     * Intenta asignar un grupo siguiendo un patrón específico de días
+     */
+    protected function intentarAsignarConPatron($grupo, $diasPatron)
+    {
+        $horasNecesarias = min(count($diasPatron), $this->calcularHorasNecesarias($grupo));
+        
+        // Probar cada bloque horario
+        foreach ($this->bloques as $bloque) {
+            $asignacionesTemp = [];
+            $todosExitosos = true;
+
+            // Intentar asignar en todos los días del patrón con el mismo bloque
+            for ($i = 0; $i < $horasNecesarias; $i++) {
+                $dia = $diasPatron[$i];
+                $aula = $this->seleccionarAulaSistematica($grupo);
+
+                if (!$aula) {
+                    $todosExitosos = false;
+                    break;
+                }
+
+                // Validar si esta asignación es posible
+                if ($this->validarAsignacion($grupo, $dia, $bloque->id_bloque, $aula->id_aula)) {
+                    $asignacionesTemp[] = [
+                        'dia' => $dia,
+                        'bloque' => $bloque->id_bloque,
+                        'aula' => $aula->id_aula,
+                    ];
+                } else {
+                    $todosExitosos = false;
+                    break;
+                }
+            }
+
+            // Si todas las asignaciones del patrón son válidas, registrarlas
+            if ($todosExitosos && count($asignacionesTemp) > 0) {
+                foreach ($asignacionesTemp as $asig) {
+                    $this->registrarAsignacion($grupo, $asig['dia'], $asig['bloque'], $asig['aula']);
+                }
+                return true;
+            }
+
+            $this->intentos++;
+            if ($this->intentos > $this->maxIntentos) {
+                return false;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Intenta asignar individualmente en cualquier combinación día-bloque disponible
+     */
+    protected function intentarAsignacionIndividual($grupo)
+    {
         $horasNecesarias = $this->calcularHorasNecesarias($grupo);
         $sesionesAsignadas = 0;
         $intentosGrupo = 0;
         $maxIntentosGrupo = $this->configuracion['intentos_por_grupo'];
 
-        while ($sesionesAsignadas < $horasNecesarias && $intentosGrupo < $maxIntentosGrupo) {
-            $intentosGrupo++;
-            $this->intentos++;
-
-            if ($this->intentos > $this->maxIntentos) {
+        // Probar todas las combinaciones día-bloque-aula sistemáticamente
+        foreach ($this->dias as $dia) {
+            if ($sesionesAsignadas >= $horasNecesarias) {
                 break;
             }
 
-            // Seleccionar dia y bloque aleatoriamente
-            $dia = $this->seleccionarDia($grupo);
-            $bloque = $this->seleccionarBloque($grupo, $dia);
-            $aula = $this->seleccionarAula($grupo);
+            foreach ($this->bloques as $bloque) {
+                if ($sesionesAsignadas >= $horasNecesarias) {
+                    break;
+                }
 
-            if (!$dia || !$bloque || !$aula) {
-                continue;
-            }
+                $aula = $this->seleccionarAulaSistematica($grupo);
 
-            // Validar conflictos
-            if ($this->validarAsignacion($grupo, $dia, $bloque->id_bloque, $aula->id_aula)) {
-                // Asignar
-                $this->registrarAsignacion($grupo, $dia, $bloque->id_bloque, $aula->id_aula);
-                $sesionesAsignadas++;
+                if (!$aula) {
+                    continue;
+                }
+
+                if ($this->validarAsignacion($grupo, $dia, $bloque->id_bloque, $aula->id_aula)) {
+                    $this->registrarAsignacion($grupo, $dia, $bloque->id_bloque, $aula->id_aula);
+                    $sesionesAsignadas++;
+                }
+
+                $intentosGrupo++;
+                $this->intentos++;
+
+                if ($intentosGrupo >= $maxIntentosGrupo || $this->intentos > $this->maxIntentos) {
+                    break 2;
+                }
             }
         }
 
@@ -171,100 +261,51 @@ class OptimizadorHorarios
     }
 
     /**
+     * Selecciona un aula de forma sistemática (rotación) para distribuir equitativamente
+     */
+    protected function seleccionarAulaSistematica($grupo)
+    {
+        if ($this->aulas->isEmpty()) {
+            return null;
+        }
+
+        // Filtrar aulas por capacidad
+        $aulasValidas = $this->aulas->filter(function($aula) use ($grupo) {
+            return !$aula->capacidad || $aula->capacidad >= ($grupo->cupo ?? 0);
+        });
+
+        if ($aulasValidas->isEmpty()) {
+            $aulasValidas = $this->aulas; // Si no hay aulas válidas, usar todas
+        }
+
+        $aulasArray = $aulasValidas->values();
+        
+        // Rotación circular para distribuir equitativamente
+        $aula = $aulasArray[$this->aulaIndex % $aulasArray->count()];
+        $this->aulaIndex++;
+
+        return $aula;
+    }
+
+    /**
      * Calcula las horas semanales necesarias para un grupo
      */
     protected function calcularHorasNecesarias($grupo)
     {
-        // Heurística: cada grupo necesita 2-4 sesiones por semana
-        // Ajustar según créditos de la materia o configuración
+        // Heurística mejorada: 
+        // - Materias de 3 créditos o menos: 2 sesiones semanales
+        // - Materias de 4-5 créditos: 3 sesiones semanales
+        // - Materias de 6+ créditos: 4 sesiones semanales
         if ($grupo->materia && $grupo->materia->creditos) {
-            return min(4, max(2, $grupo->materia->creditos));
-        }
-        return 2; // Default: 2 sesiones
-    }
-
-    /**
-     * Selecciona un día apropiado para el grupo
-     */
-    protected function seleccionarDia($grupo)
-    {
-        // Aplicar preferencias si están configuradas
-        if ($this->configuracion['respetar_preferencias']) {
-            // Aquí podrías implementar lógica de preferencias por día
-        }
-
-        // Seleccionar día con menos carga para el docente
-        $diasDisponibles = $this->dias;
-        
-        if ($this->configuracion['balancear_carga_diaria']) {
-            usort($diasDisponibles, function($a, $b) use ($grupo) {
-                $cargaA = $this->contarAsignacionesDocente($grupo->id_docente, $a);
-                $cargaB = $this->contarAsignacionesDocente($grupo->id_docente, $b);
-                return $cargaA <=> $cargaB;
-            });
-        } else {
-            shuffle($diasDisponibles);
-        }
-
-        return $diasDisponibles[0] ?? null;
-    }
-
-    /**
-     * Selecciona un bloque horario apropiado
-     */
-    protected function seleccionarBloque($grupo, $dia)
-    {
-        $bloquesDisponibles = $this->bloques->shuffle();
-
-        // Aplicar preferencias de horario
-        if ($this->configuracion['respetar_preferencias']) {
-            $docente = $grupo->id_docente;
-            
-            if (in_array($docente, $this->configuracion['preferir_manana'])) {
-                // Priorizar bloques de mañana (antes de 12:00)
-                $bloquesDisponibles = $bloquesDisponibles->sortBy(function($bloque) {
-                    return strtotime($bloque->hora_inicio) < strtotime('12:00:00') ? 0 : 1;
-                });
-            } elseif (in_array($docente, $this->configuracion['preferir_tarde'])) {
-                // Priorizar bloques de tarde (después de 12:00)
-                $bloquesDisponibles = $bloquesDisponibles->sortBy(function($bloque) {
-                    return strtotime($bloque->hora_inicio) >= strtotime('12:00:00') ? 0 : 1;
-                });
+            if ($grupo->materia->creditos <= 3) {
+                return 2;
+            } elseif ($grupo->materia->creditos <= 5) {
+                return 3;
+            } else {
+                return 4;
             }
         }
-
-        // Minimizar huecos: preferir bloques contiguos a clases ya asignadas
-        if ($this->configuracion['minimizar_huecos']) {
-            $bloquesDisponibles = $bloquesDisponibles->sortBy(function($bloque) use ($grupo, $dia) {
-                return $this->tieneClaseCercana($grupo->id_docente, $dia, $bloque->id_bloque) ? 0 : 1;
-            });
-        }
-
-        return $bloquesDisponibles->first();
-    }
-
-    /**
-     * Selecciona un aula apropiada para el grupo
-     */
-    protected function seleccionarAula($grupo)
-    {
-        // Filtrar aulas por capacidad si el grupo tiene cupo definido
-        $aulasDisponibles = $this->aulas;
-        
-        if ($grupo->cupo) {
-            $aulasDisponibles = $aulasDisponibles->filter(function($aula) use ($grupo) {
-                return !$aula->capacidad || $aula->capacidad >= $grupo->cupo;
-            });
-        }
-
-        // Priorizar aulas del tipo adecuado
-        $aulasDisponibles = $aulasDisponibles->sortBy(function($aula) {
-            // Aulas estándar primero, laboratorios/auditorio después
-            $prioridad = ['Estándar' => 1, 'Laboratorio' => 2, 'Auditorio' => 3];
-            return $prioridad[$aula->tipo] ?? 4;
-        });
-
-        return $aulasDisponibles->first();
+        return 2; // Default: 2 sesiones (Mar-Jue típicamente)
     }
 
     /**
@@ -282,7 +323,7 @@ class OptimizadorHorarios
             return false;
         }
 
-        // 3. Validar carga horaria del docente
+        // 3. Validar carga horaria del docente (si existe)
         if (isset($this->cargasDocentes[$grupo->id_docente])) {
             $carga = $this->cargasDocentes[$grupo->id_docente];
             $horasAsignadas = $this->horasAsignadasDocente[$grupo->id_docente] ?? 0;
@@ -292,7 +333,7 @@ class OptimizadorHorarios
             }
         }
 
-        // 4. Validar máximo de horas por día
+        // 4. Validar máximo de horas por día (evitar sobrecarga diaria)
         $horasEsteDia = $this->contarAsignacionesDocente($grupo->id_docente, $dia);
         if ($horasEsteDia >= $this->configuracion['max_horas_dia_docente']) {
             return false;
@@ -332,22 +373,6 @@ class OptimizadorHorarios
             }
         }
         return $count;
-    }
-
-    /**
-     * Verifica si el docente tiene clases cercanas (para minimizar huecos)
-     */
-    protected function tieneClaseCercana($idDocente, $dia, $idBloque)
-    {
-        foreach ($this->asignaciones as $asig) {
-            if ($asig['id_docente'] == $idDocente && $asig['dia_semana'] == $dia) {
-                // Si hay una clase en el bloque anterior o siguiente
-                if (abs($asig['id_bloque'] - $idBloque) == 1) {
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 
     /**

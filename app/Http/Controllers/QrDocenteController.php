@@ -174,93 +174,104 @@ class QrDocenteController extends Controller
     }
     
     /**
-     * Generar QR con overlay personalizado PROFESIONAL (PNG con datos completos del docente)
+     * Generar QR con overlay minimalista (PNG con nombre, puesto, facultad)
      */
-private function generarQrConOverlay(DocenteQrToken $token, int $qrSize = 500)
+    private function generarQrConOverlay(DocenteQrToken $token, int $qrSize = 400)
     {
         $token->load(['docente.roles', 'gestion']);
         
-        // --- 1. GENERACIÓN DE QR (MÉTODO DE ARCHIVO TEMPORAL) ---
-        // Definir un path temporal único
+        // Generar QR en archivo temporal
         $tempFile = storage_path('app/temp_qr_' . uniqid() . '.png');
-        $qrImage = null; // Variable para la imagen GD
+        $qrImage = null;
         
         try {
-            // Usamos las opciones de PNG más simples y compatibles para GD
             QrCode::format('png')
                 ->size($qrSize)
                 ->margin(1)
+                ->color(30, 41, 59) // Slate-800
+                ->backgroundColor(255, 255, 255)
                 ->errorCorrection('H')
-                ->generate($token->url_escaneo, $tempFile); // Guardar directamente en el archivo
+                ->generate($token->url_escaneo, $tempFile);
 
-            // Comprobar si el archivo fue creado
             if (!file_exists($tempFile)) {
-                throw new \Exception("No se pudo crear el archivo QR temporal.");
+                throw new \Exception("No se pudo crear el archivo QR.");
             }
 
-            // Leer la imagen desde el ARCHIVO (mucho más robusto que desde string)
             $qrImage = @imagecreatefrompng($tempFile);
 
             if (!$qrImage) {
-                throw new \Exception("GD no pudo leer el archivo QR temporal (imagecreatefrompng falló).");
+                throw new \Exception("Error al leer QR.");
             }
 
         } catch (\Throwable $e) {
-            // Fallback si todo falla
             $qrImage = imagecreatetruecolor($qrSize, $qrSize);
             imagefill($qrImage, 0, 0, imagecolorallocate($qrImage, 243, 244, 246));
-            $errCol = imagecolorallocate($qrImage, 185, 28, 28);
-            imagestring($qrImage, 5, 20, $qrSize/2, "ERROR QR (FILE)", $errCol);
-            // Opcional: Loguear el error real para ti
-            // \Log::error("Fallo QR definitivo: " . $e->getMessage());
-
         } finally {
-            // Asegurarnos de borrar el archivo temporal pase lo que pase
             if (file_exists($tempFile)) {
                 @unlink($tempFile);
             }
         }
 
-        // --- 2. CONFIGURACIÓN DEL CANVAS (Sin cambios) ---
-        $padding = 60;
-        $headerHeight = 100;
-        $footerHeight = 160;
+        // Configuración del canvas minimalista
+        $padding = 50;
+        $topSpace = 120;
+        $bottomSpace = 120;
         $canvasWidth = $qrSize + ($padding * 2);
-        $canvasHeight = $qrSize + $headerHeight + $footerHeight;
+        $canvasHeight = $qrSize + $topSpace + $bottomSpace;
 
         $canvas = imagecreatetruecolor($canvasWidth, $canvasHeight);
         
-        // Paleta
+        // Colores minimalistas
         $white = imagecolorallocate($canvas, 255, 255, 255);
-        $black = imagecolorallocate($canvas, 17, 24, 39);
-        $grayDark = imagecolorallocate($canvas, 55, 65, 81);
-        $grayLight = imagecolorallocate($canvas, 156, 163, 175);
-        $accent = imagecolorallocate($canvas, 79, 70, 229);
+        $black = imagecolorallocate($canvas, 15, 23, 42); // Slate-900
+        $gray = imagecolorallocate($canvas, 100, 116, 139); // Slate-500
+        $accent = imagecolorallocate($canvas, 99, 102, 241); // Indigo-600
 
         imagefill($canvas, 0, 0, $white);
 
-        // --- 3. DIBUJAR ELEMENTOS (Sin cambios) ---
-        $this->drawCenteredText($canvas, "FACULTAD DE CIENCIAS Y TECNOLOGÍA", 4, 40, $black, $canvasWidth);
-        $this->drawCenteredText($canvas, "CONTROL DE ASISTENCIA", 2, 65, $grayLight, $canvasWidth);
+        // Barra superior decorativa
+        imagefilledrectangle($canvas, 0, 0, $canvasWidth, 6, $accent);
 
-        // Pegar el QR (que ahora SÍ existe)
-        imagecopy($canvas, $qrImage, $padding, $headerHeight, 0, 0, $qrSize, $qrSize);
+        // Texto superior: "FACULTAD DE CIENCIAS Y TECNOLOGÍA"
+        $facultad = "FACULTAD DE CIENCIAS Y TECNOLOGIA";
+        $this->drawCenteredText($canvas, $facultad, 2, 30, $gray, $canvasWidth);
 
-        // Footer
-        $footerStartY = $headerHeight + $qrSize + 30;
+        // Título: "CONTROL DE ASISTENCIA"
+        $titulo = "CONTROL DE ASISTENCIA";
+        $this->drawCenteredText($canvas, $titulo, 5, 55, $black, $canvasWidth);
+
+        // Fondo del QR
+        $qrBgX = $padding - 10;
+        $qrBgY = $topSpace - 10;
+        $qrBgWidth = $qrSize + 20;
+        $qrBgHeight = $qrSize + 20;
+        $qrBgColor = imagecolorallocate($canvas, 248, 250, 252); // Slate-50
+        imagefilledrectangle($canvas, $qrBgX, $qrBgY, $qrBgX + $qrBgWidth, $qrBgY + $qrBgHeight, $qrBgColor);
+
+        // Pegar el QR
+        imagecopy($canvas, $qrImage, $padding, $topSpace, 0, 0, $qrSize, $qrSize);
+
+        // Información inferior
+        $infoY = $topSpace + $qrSize + 30;
+
+        // Nombre del docente (MAYÚSCULAS, negrita simulada)
         $nombreDocente = mb_strtoupper($token->docente->name, 'UTF-8');
-        $this->drawCenteredText($canvas, $nombreDocente, 5, $footerStartY, $black, $canvasWidth);
-        $this->drawCenteredText($canvas, $nombreDocente, 5, $footerStartY, $black, $canvasWidth, 1); // Falsa negrita
+        $this->drawCenteredText($canvas, $nombreDocente, 5, $infoY, $black, $canvasWidth);
+        $this->drawCenteredText($canvas, $nombreDocente, 5, $infoY, $black, $canvasWidth, 1); // Negrita
 
-        $roles = $token->docente->roles->pluck('name')->join(' / ');
-        $this->drawCenteredText($canvas, $roles, 4, $footerStartY + 35, $grayDark, $canvasWidth);
+        // Puesto/Rol
+        $rol = mb_strtoupper($token->docente->roles->pluck('name')->first() ?? 'DOCENTE', 'UTF-8');
+        $this->drawCenteredText($canvas, $rol, 3, $infoY + 30, $accent, $canvasWidth);
 
-        $gestionTexto = "Gestión " . $token->gestion->nombre;
-        $this->drawCenteredText($canvas, $gestionTexto, 2, $footerStartY + 70, $grayLight, $canvasWidth);
+        // Línea separadora
+        $lineY = $infoY + 55;
+        imageline($canvas, $canvasWidth/2 - 40, $lineY, $canvasWidth/2 + 40, $lineY, $gray);
 
-        imageline($canvas, $canvasWidth/2 - 30, $canvasHeight - 20, $canvasWidth/2 + 30, $canvasHeight - 20, $accent);
+        // Gestión
+        $gestion = "GESTION: " . mb_strtoupper($token->gestion->nombre, 'UTF-8');
+        $this->drawCenteredText($canvas, $gestion, 2, $lineY + 15, $gray, $canvasWidth);
 
-        // --- 4. EXPORTAR (Sin cambios) ---
+        // Exportar
         ob_start();
         imagepng($canvas, null, 9);
         $finalData = ob_get_clean();
@@ -313,44 +324,21 @@ private function drawCenteredText($canvas, $text, $font, $y, $color, $canvasWidt
     }
     
     /**
-     * Descargar QR como imagen PNG con overlay
+     * Descargar QR como imagen PNG (genera imagen real desde el template)
      */
     public function descargarImagen(DocenteQrToken $token)
     {
         $token->load(['docente.roles', 'gestion']);
         
-        // Generar QR SVG
-        $qrSvg = QrCode::format('svg')
-                    ->size(300)
-                    ->margin(0)
-                    ->color(30, 41, 59)
-                    ->backgroundColor(255, 255, 255)
-                    ->errorCorrection('H')
-                    ->generate($token->url_escaneo);
+        // Usar el método existente que genera PNG con overlay profesional
+        $pngData = $this->generarQrConOverlay($token, 400);
         
-        // Renderizar el template HTML
-        $qrHtml = view('qr-docente.template', compact('token', 'qrSvg'))->render();
+        $filename = "QR_{$token->docente->name}_{$token->gestion->nombre}.png";
+        $filename = str_replace([' ', '/'], ['_', '-'], $filename);
         
-        // Retornar como respuesta HTML embebida en una página completa para captura
-        $html = "
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset='utf-8'>
-            <link href='https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css' rel='stylesheet'>
-            <style>
-                body { margin: 0; padding: 20px; background: white; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-            </style>
-        </head>
-        <body>
-            {$qrHtml}
-        </body>
-        </html>
-        ";
-        
-        return response($html)
-            ->header('Content-Type', 'text/html')
-            ->header('X-Download-Filename', "QR_{$token->docente->name}_{$token->gestion->nombre}.png");
+        return response($pngData)
+            ->header('Content-Type', 'image/png')
+            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
     }
     
     /**
@@ -418,44 +406,47 @@ private function drawCenteredText($canvas, $text, $font, $y, $color, $canvasWidt
     
     /**
      * Mi QR (vista del docente autenticado)
+     * SOLO muestra si el admin ya lo generó
      */
     public function miQr(Request $request)
     {
         $docente = auth()->user();
-        $gestion = Gestion::where('fecha_fin', '>=', now())
+        $gestionActual = Gestion::where('fecha_fin', '>=', now())
                           ->orderBy('fecha_inicio', 'desc')->first()
                    ?? Gestion::orderBy('fecha_inicio', 'desc')->first();
 
-        if (!$gestion) {
-            return view('qr-docente.mi-qr', ['error' => 'No hay gestiones registradas en el sistema']);
+        if (!$gestionActual) {
+            return view('qr-docente.mi-qr', [
+                'error' => 'No hay gestiones registradas en el sistema',
+                'sinGestion' => true
+            ]);
         }
 
+        // Buscar QR existente (YA NO SE CREA AUTOMÁTICAMENTE)
         $token = DocenteQrToken::where('id_docente', $docente->id)
-                               ->where('id_gestion', $gestion->id_gestion)->first();
+                               ->where('id_gestion', $gestionActual->id_gestion)->first();
 
+        // Si no existe, mostrar mensaje de que debe contactar al admin
         if (!$token) {
-            $token = DocenteQrToken::create([
-                'id_docente' => $docente->id,
-                'id_gestion' => $gestion->id_gestion,
-                'token' => DocenteQrToken::generarToken($docente->id, $gestion->id_gestion),
-                'activo' => true,
-                'fecha_generacion' => now(),
-            ]);
-            $this->logBitacora($request, [
-                'accion' => 'auto_generar',
-                'tabla_afectada' => 'docente_qr_tokens',
-                'registro_id' => $token->id_qr_token,
-                'descripcion' => "Docente generó su propio QR para gestión {$gestion->nombre}",
-                'id_gestion' => $gestion->id_gestion,
-                'exitoso' => true
+            return view('qr-docente.mi-qr', [
+                'sinQr' => true,
+                'gestionActual' => $gestionActual,
+                'docente' => $docente
             ]);
         }
 
         $token->load(['gestion']);
-        // Mantenemos SVG para la vista web directa si funciona, o usa PNG si prefieres consistencia
-        $qrSvg = QrCode::size(300)->margin(2)->generate($token->url_escaneo);
+        
+        // Generar código QR
+        $qrCode = QrCode::format('svg')
+                    ->size(300)
+                    ->margin(0)
+                    ->color(30, 41, 59) // Slate-800
+                    ->backgroundColor(255, 255, 255)
+                    ->errorCorrection('H')
+                    ->generate($token->url_escaneo);
 
-        return view('qr-docente.mi-qr', compact('token', 'qrSvg'));
+        return view('qr-docente.mi-qr', compact('token', 'qrCode', 'gestionActual'));
     }
     
     /**

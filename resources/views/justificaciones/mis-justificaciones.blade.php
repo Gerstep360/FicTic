@@ -132,7 +132,7 @@
                                             @endif
                                         </div>
                                         <div class="ml-4">
-                                            <a href="{{ route('justificaciones.show', $justificacion->id_justificacion) }}" 
+                                            <a href="{{ route('justificaciones.show', $justificacion->id_justif) }}" 
                                                class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg shadow transition">
                                                 Ver Detalle
                                             </a>

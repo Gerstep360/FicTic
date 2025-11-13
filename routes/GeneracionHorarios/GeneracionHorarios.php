@@ -5,6 +5,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::resource('generacion-horarios', GeneracionHorarioController::class)->names('generacion-horarios');
+    Route::post('generacion-horarios/{generacionHorario}/seleccionar', [GeneracionHorarioController::class, 'seleccionar'])
+        ->name('generacion-horarios.seleccionar');
     Route::post('generacion-horarios/{generacionHorario}/aplicar', [GeneracionHorarioController::class, 'aplicar'])
         ->name('generacion-horarios.aplicar');
     Route::get('generacion-horarios/{generacionHorario}/pdf', [GeneracionHorarioController::class, 'pdf'])

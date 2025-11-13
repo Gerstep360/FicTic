@@ -18,6 +18,7 @@ class GeneracionHorario extends Model
         'id_usuario',
         'configuracion',
         'estado',
+        'is_seleccionado',
         'resultado',
         'mensaje',
         'total_grupos',
@@ -120,7 +121,19 @@ class GeneracionHorario extends Model
 
     public function getPuedeAplicarseAttribute()
     {
-        return $this->estado === 'completado' && !empty($this->resultado);
+        // Puede aplicarse si está completado O si ya fue aplicado (para poder revertir)
+        return in_array($this->estado, ['completado', 'aplicado']) && !empty($this->resultado);
+    }
+
+    public function seleccionar()
+    {
+        // Deseleccionar todas las demás generaciones de la misma gestión
+        static::where('id_gestion', $this->id_gestion)
+            ->where('id_generacion', '!=', $this->id_generacion)
+            ->update(['is_seleccionado' => false]);
+        
+        // Seleccionar esta
+        $this->update(['is_seleccionado' => true]);
     }
 
     public function getPorcentajeExitoAttribute()

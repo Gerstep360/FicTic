@@ -75,11 +75,6 @@ class Gestion extends Model
 
     public function getPuedePublicarAttribute(): bool
     {
-        // Admin DTIC puede publicar siempre (bypass)
-        if (auth()->check() && auth()->user()->hasRole('Admin DTIC')) {
-            return true;
-        }
-
         // Verificar que todas las aprobaciones de carrera estén en estado aprobado_final
         $totalAprobaciones = $this->aprobaciones()->count();
         

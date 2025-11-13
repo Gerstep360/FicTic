@@ -86,61 +86,55 @@
         @else
             <div class="space-y-4">
                 @foreach($generaciones as $generacion)
-                    <div class="card p-6 hover:border-slate-600 transition">
-                        <div class="flex items-start justify-between gap-4">
+                    <div class="card p-4 md:p-6 hover:border-slate-600 transition">
+                        {{-- Header con título y badges --}}
+                        <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-4">
                             <div class="flex-1">
-                                <div class="flex items-center gap-3 mb-2">
-                                    <h3 class="text-lg font-semibold text-slate-200">
+                                <div class="flex flex-wrap items-center gap-2 mb-3">
+                                    <h3 class="text-base md:text-lg font-semibold text-slate-200">
                                         {{ $generacion->gestion->nombre }}
+                                        <span class="text-slate-400">-</span>
                                         @if($generacion->carrera)
-                                            - {{ $generacion->carrera->nombre_carrera }}
+                                            {{ $generacion->carrera->nombre_carrera }}
                                         @else
-                                            - Toda la Facultad
+                                            <span class="text-purple-400">Toda la Facultad</span>
                                         @endif
                                     </h3>
+                                </div>
+
+                                <div class="flex flex-wrap items-center gap-2">
+                                    @if($generacion->is_seleccionado && $generacion->puede_aplicarse)
+                                        <span class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-cyan-500/30 text-cyan-300 border border-cyan-400/50 flex items-center gap-1.5 shadow-lg shadow-cyan-500/20">
+                                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                            </svg>
+                                            ✓ SELECCIONADO
+                                        </span>
+                                    @endif
                                     
-                                    <span class="px-2 py-1 text-xs rounded-full
-                                        {{ $generacion->estado === 'completado' ? 'bg-green-500/20 text-green-400' : '' }}
-                                        {{ $generacion->estado === 'aplicado' ? 'bg-blue-500/20 text-blue-400' : '' }}
-                                        {{ $generacion->estado === 'error' ? 'bg-red-500/20 text-red-400' : '' }}
-                                        {{ $generacion->estado === 'procesando' ? 'bg-amber-500/20 text-amber-400' : '' }}
-                                        {{ $generacion->estado === 'pendiente' ? 'bg-slate-500/20 text-slate-400' : '' }}">
+                                    @if($generacion->estado === 'aplicado')
+                                        <span class="px-2.5 py-1 text-xs font-medium rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30 flex items-center gap-1">
+                                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                            </svg>
+                                            Activo en Sistema
+                                        </span>
+                                    @endif
+                                    
+                                    <span class="px-2.5 py-1 text-xs font-medium rounded-full
+                                        {{ $generacion->estado === 'completado' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : '' }}
+                                        {{ $generacion->estado === 'aplicado' ? 'bg-slate-600/20 text-slate-400 border border-slate-600/30' : '' }}
+                                        {{ $generacion->estado === 'error' ? 'bg-red-500/20 text-red-400 border border-red-500/30' : '' }}
+                                        {{ $generacion->estado === 'procesando' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : '' }}
+                                        {{ $generacion->estado === 'pendiente' ? 'bg-slate-500/20 text-slate-400 border border-slate-500/30' : '' }}">
                                         {{ ucfirst($generacion->estado) }}
                                     </span>
                                 </div>
-
-                                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-slate-400 mb-3">
-                                    <div>
-                                        <span class="block text-xs text-slate-500">Generado por</span>
-                                        <span class="text-slate-300">{{ $generacion->usuario->name }}</span>
-                                    </div>
-                                    <div>
-                                        <span class="block text-xs text-slate-500">Fecha</span>
-                                        <span class="text-slate-300">{{ $generacion->created_at->format('d/m/Y H:i') }}</span>
-                                    </div>
-                                    <div>
-                                        <span class="block text-xs text-slate-500">Grupos asignados</span>
-                                        <span class="text-slate-300">{{ $generacion->grupos_asignados }}/{{ $generacion->total_grupos }}</span>
-                                    </div>
-                                    <div>
-                                        <span class="block text-xs text-slate-500">Puntuación</span>
-                                        <span class="text-slate-300">{{ $generacion->puntuacion_optimizacion ?? 'N/A' }}/100</span>
-                                    </div>
-                                </div>
-
-                                @if($generacion->mensaje)
-                                    <p class="text-sm text-slate-400 italic">{{ $generacion->mensaje }}</p>
-                                @endif
-
-                                @if($generacion->duracion_segundos)
-                                    <p class="text-xs text-slate-500 mt-2">
-                                        Duración: {{ $generacion->duracion_segundos }}s
-                                    </p>
-                                @endif
                             </div>
 
-                            <div class="flex flex-col gap-2">
-                                <a href="{{ route('generacion-horarios.show', $generacion) }}" class="btn-secondary text-sm">
+                            {{-- Botones de acción --}}
+                            <div class="flex flex-row sm:flex-col gap-2 w-full sm:w-auto">
+                                <a href="{{ route('generacion-horarios.show', $generacion) }}" class="btn-secondary text-sm flex-1 sm:flex-none justify-center">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
@@ -148,20 +142,86 @@
                                     Ver
                                 </a>
 
-                                @if($generacion->puede_aplicarse && (auth()->user()->can('generar_horario_auto') || auth()->user()->hasRole('Admin DTIC')))
-                                    <form method="POST" action="{{ route('generacion-horarios.aplicar', $generacion) }}"
-                                          onsubmit="return confirm('¿Aplicar estos horarios? Esto eliminará los horarios actuales de esta gestión/carrera.');">
-                                        @csrf
-                                        <button type="submit" class="btn-primary text-sm w-full">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                                            </svg>
-                                            Aplicar
-                                        </button>
-                                    </form>
-                                @endif
+                                    @if($generacion->puede_aplicarse && (auth()->user()->can('generar_horario_auto') || auth()->user()->hasRole('Admin DTIC')))
+                                        @if(!$generacion->is_seleccionado)
+                                            <form method="POST" action="{{ route('generacion-horarios.seleccionar', $generacion) }}" class="flex-1 sm:flex-none">
+                                                @csrf
+                                                <button type="submit" class="btn-outline text-sm w-full border-cyan-500/40 text-cyan-300 hover:bg-cyan-500/20 hover:border-cyan-400 justify-center">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                                    </svg>
+                                                    Seleccionar
+                                                </button>
+                                            </form>
+                                        @endif
+
+                                        @if($generacion->is_seleccionado)
+                                            <form method="POST" action="{{ route('generacion-horarios.aplicar', $generacion) }}"
+                                                  onsubmit="return confirm('¿Aplicar estos horarios? Esto eliminará los horarios actuales de esta gestión/carrera.');"
+                                                  class="flex-1 sm:flex-none">
+                                                @csrf
+                                                <button type="submit" 
+                                                        class="btn-primary text-sm w-full justify-center hover:shadow-lg hover:shadow-blue-500/20">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                                    </svg>
+                                                    Aplicar
+                                                </button>
+                                            </form>
+                                        @else
+                                            <button type="button" 
+                                                    disabled
+                                                    title="Debes seleccionar esta generación primero"
+                                                    class="btn-primary text-sm w-full justify-center opacity-40 cursor-not-allowed bg-slate-700 flex-1 sm:flex-none">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                                </svg>
+                                                Aplicar
+                                                <svg class="w-3 h-3 ml-1" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M5 10a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1z" clip-rule="evenodd"/>
+                                                </svg>
+                                            </button>
+                                        @endif
+                                    @endif
                             </div>
                         </div>
+
+                        {{-- Información en grid --}}
+                        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 text-sm text-slate-400">
+                            <div class="space-y-1">
+                                <span class="block text-xs text-slate-500">Generado por</span>
+                                <span class="text-slate-300 font-medium">{{ $generacion->usuario->name }}</span>
+                            </div>
+                            <div class="space-y-1">
+                                <span class="block text-xs text-slate-500">Fecha</span>
+                                <span class="text-slate-300">{{ $generacion->created_at->format('d/m/Y H:i') }}</span>
+                            </div>
+                            <div class="space-y-1">
+                                <span class="block text-xs text-slate-500">Grupos asignados</span>
+                                <span class="text-slate-300 font-semibold">
+                                    {{ $generacion->grupos_asignados }}<span class="text-slate-500">/</span>{{ $generacion->total_grupos }}
+                                </span>
+                            </div>
+                            <div class="space-y-1">
+                                <span class="block text-xs text-slate-500">Puntuación</span>
+                                <span class="text-slate-300">{{ $generacion->puntuacion_optimizacion ?? 'N/A' }}/100</span>
+                            </div>
+                        </div>
+
+                        @if($generacion->mensaje)
+                            <div class="mt-3 pt-3 border-t border-slate-700">
+                                <p class="text-sm text-slate-400 italic">{{ $generacion->mensaje }}</p>
+                            </div>
+                        @endif
+
+                        @if($generacion->duracion_segundos)
+                            <p class="text-xs text-slate-500 mt-2">
+                                <svg class="w-3 h-3 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                Duración: {{ $generacion->duracion_segundos }}s
+                            </p>
+                        @endif
                     </div>
                 @endforeach
             </div>

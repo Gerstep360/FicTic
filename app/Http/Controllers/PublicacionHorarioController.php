@@ -32,11 +32,88 @@ class PublicacionHorarioController extends Controller
      */
     public function index()
     {
-        $gestiones = Gestion::with(['aprobaciones.carrera', 'usuarioPublicador'])
+        $gestiones = Gestion::with([
+            'aprobaciones.carrera.facultad',
+            'aprobaciones.coordinador',
+            'aprobaciones.director',
+            'aprobaciones.decano',
+            'usuarioPublicador'
+        ])
             ->orderBy('fecha_inicio', 'desc')
             ->paginate(15);
 
         return view('publicacion.index', compact('gestiones'));
+    }
+
+    /**
+     * Vista previa detallada antes de publicar
+     */
+    public function preview(Gestion $gestion)
+    {
+        // Cargar todas las aprobaciones con sus relaciones
+        $gestion->load([
+            'aprobaciones.carrera.facultad',
+            'aprobaciones.coordinador',
+            'aprobaciones.director',
+            'aprobaciones.decano'
+        ]);
+
+        // Obtener TODOS los horarios de esta gestión con todas las relaciones
+        $horarios = \App\Models\HorarioClase::with([
+            'grupo.materia.carrera.facultad',
+            'docente',
+            'aula',
+            'bloque'
+        ])
+        ->whereHas('grupo', function($q) use ($gestion) {
+            $q->where('id_gestion', $gestion->id_gestion);
+        })
+        ->orderBy('dia_semana')
+        ->orderBy('id_bloque')
+        ->get();
+
+        // Agrupar por carrera para mejor organización
+        $horariosPorCarrera = $horarios->groupBy(function($horario) {
+            return $horario->grupo->materia->carrera->nombre_carrera ?? 'Sin Carrera';
+        });
+
+        // Estadísticas generales
+        $stats = [
+            'total_horarios' => $horarios->count(),
+            'total_docentes' => $horarios->pluck('id_docente')->unique()->count(),
+            'total_aulas' => $horarios->pluck('id_aula')->unique()->count(),
+            'total_materias' => $horarios->pluck('grupo.materia.id_materia')->unique()->count(),
+            'total_grupos' => $horarios->pluck('id_grupo')->unique()->count(),
+        ];
+
+        // Docentes únicos con su carga horaria
+        $docentes = $horarios->groupBy('id_docente')->map(function($horariosDocente) {
+            $docente = $horariosDocente->first()->docente;
+            return [
+                'docente' => $docente,
+                'total_horas' => $horariosDocente->count() * 2, // Asumiendo bloques de 2 horas
+                'materias' => $horariosDocente->pluck('grupo.materia.nombre')->unique()->values(),
+            ];
+        })->sortByDesc('total_horas');
+
+        // Aulas y su ocupación
+        $aulas = $horarios->groupBy('id_aula')->map(function($horariosAula) {
+            $aula = $horariosAula->first()->aula;
+            return [
+                'aula' => $aula,
+                'ocupacion' => $horariosAula->count(),
+                'grupos' => $horariosAula->pluck('grupo.nombre')->unique()->count(),
+            ];
+        })->sortByDesc('ocupacion');
+
+        return view('publicacion.preview', compact(
+            'gestion',
+            'horarios',
+            'horariosPorCarrera',
+            'stats',
+            'docentes',
+            'aulas'
+        ));
     }
 
     /**

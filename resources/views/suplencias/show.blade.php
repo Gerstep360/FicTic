@@ -25,130 +25,137 @@
 
             <div class="card">
                 <div class="p-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    
+                    {{-- Información Principal en Grid --}}
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
                         
-                        {{-- Información General --}}
-                        <div class="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-lg border border-blue-200 dark:border-blue-700">
-                            <h3 class="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-4 flex items-center">
-                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                                </svg>
-                                Información General
-                            </h3>
-                            <dl class="space-y-3">
-                                <div>
-                                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Fecha de la Clase</dt>
-                                    <dd class="mt-1 text-lg font-semibold text-gray-900 dark:text-gray-100">
-                                        {{ $suplencia->fecha_clase->format('d/m/Y') }}
-                                        <span class="text-sm">({{ $suplencia->fecha_clase->translatedFormat('l') }})</span>
-                                    </dd>
-                                </div>
-                                <div>
-                                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Estado</dt>
-                                    <dd class="mt-1">
-                                        @if($suplencia->fecha_clase->isPast())
-                                            <span class="px-3 py-1 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-sm font-medium">Pasada</span>
-                                        @elseif($suplencia->fecha_clase->isToday())
-                                            <span class="px-3 py-1 bg-blue-200 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300 rounded-full text-sm font-medium">Hoy</span>
-                                        @else
-                                            <span class="px-3 py-1 bg-green-200 dark:bg-green-900/50 text-green-800 dark:text-green-300 rounded-full text-sm font-medium">Próxima</span>
-                                        @endif
-                                    </dd>
-                                </div>
-                                <div>
-                                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Registrado</dt>
-                                    <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ $suplencia->created_at->format('d/m/Y H:i') }}</dd>
-                                </div>
-                            </dl>
+                        {{-- Fecha y Estado --}}
+                        <div>
+                            <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Fecha de la Clase</label>
+                            <p class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                                {{ $suplencia->fecha_clase->format('d/m/Y') }}
+                            </p>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                {{ $suplencia->fecha_clase->translatedFormat('l') }}
+                            </p>
+                            @if($suplencia->fecha_clase->isPast())
+                                <span class="inline-block mt-2 px-2 py-1 text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded">Pasada</span>
+                            @elseif($suplencia->fecha_clase->isToday())
+                                <span class="inline-block mt-2 px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded">Hoy</span>
+                            @else
+                                <span class="inline-block mt-2 px-2 py-1 text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded">Próxima</span>
+                            @endif
                         </div>
 
-                        {{-- Horario --}}
-                        <div class="bg-purple-50 dark:bg-purple-900/20 p-6 rounded-lg border border-purple-200 dark:border-purple-700">
-                            <h3 class="text-lg font-semibold text-purple-900 dark:text-purple-100 mb-4 flex items-center">
-                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                </svg>
-                                Detalles del Horario
-                            </h3>
-                            <dl class="space-y-3">
-                                <div>
-                                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Materia</dt>
-                                    <dd class="mt-1 text-base font-semibold text-gray-900 dark:text-gray-100">{{ $suplencia->horario->grupo->materia->nombre }}</dd>
-                                </div>
-                                <div>
-                                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Grupo</dt>
-                                    <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ $suplencia->horario->grupo->nombre_grupo }}</dd>
-                                </div>
-                                <div>
-                                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Aula</dt>
-                                    <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ $suplencia->horario->aula->codigo }} - {{ $suplencia->horario->aula->edificio }}</dd>
-                                </div>
-                                <div>
-                                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Horario</dt>
-                                    <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">
-                                        {{ $suplencia->horario->bloque->hora_inicio }} - {{ $suplencia->horario->bloque->hora_fin }}
-                                        @if($suplencia->horario->bloque->etiqueta)
-                                            <span class="text-xs text-gray-500 dark:text-gray-400">({{ $suplencia->horario->bloque->etiqueta }})</span>
-                                        @endif
-                                    </dd>
-                                </div>
-                            </dl>
+                        {{-- Materia y Horario --}}
+                        <div>
+                            <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Materia</label>
+                            <p class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                                {{ $suplencia->horario->grupo->materia->nombre }}
+                            </p>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                Grupo: {{ $suplencia->horario->grupo->nombre_grupo }}
+                            </p>
                         </div>
 
+                        {{-- Aula y Bloque --}}
+                        <div>
+                            <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Aula</label>
+                            <p class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                                {{ $suplencia->horario->aula->codigo }}
+                            </p>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                {{ $suplencia->horario->bloque->hora_inicio }} - {{ $suplencia->horario->bloque->hora_fin }}
+                                @if($suplencia->horario->bloque->etiqueta)
+                                    <span class="text-xs">({{ $suplencia->horario->bloque->etiqueta }})</span>
+                                @endif
+                            </p>
+                        </div>
+                    </div>
+
+                    <hr class="border-gray-200 dark:border-gray-700 my-6">
+
+                    {{-- Docentes --}}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        
                         {{-- Docente Ausente --}}
-                        <div class="bg-red-50 dark:bg-red-900/20 p-6 rounded-lg border border-red-200 dark:border-red-700">
-                            <h3 class="text-lg font-semibold text-red-900 dark:text-red-100 mb-4 flex items-center">
-                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                            <div class="flex items-center gap-2 mb-3">
+                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                                 </svg>
-                                Docente Ausente
-                            </h3>
-                            <dl class="space-y-3">
-                                <div>
-                                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Nombre</dt>
-                                    <dd class="mt-1 text-base font-semibold text-gray-900 dark:text-gray-100">{{ $suplencia->docenteAusente->name }}</dd>
-                                </div>
-                                <div>
-                                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Email</dt>
-                                    <dd class="mt-1 text-sm text-gray-700 dark:text-gray-300">{{ $suplencia->docenteAusente->email }}</dd>
-                                </div>
-                            </dl>
+                                <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase">Docente Ausente</h3>
+                            </div>
+                            <p class="text-base font-semibold text-gray-900 dark:text-gray-100 mb-1">
+                                {{ $suplencia->docenteAusente->name }}
+                            </p>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">
+                                {{ $suplencia->docenteAusente->email }}
+                            </p>
                         </div>
 
                         {{-- Docente Suplente --}}
-                        <div class="bg-green-50 dark:bg-green-900/20 p-6 rounded-lg border border-green-200 dark:border-green-700">
-                            <h3 class="text-lg font-semibold text-green-900 dark:text-green-100 mb-4 flex items-center">
-                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                            <div class="flex items-center gap-2 mb-3">
+                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>
-                                Docente Suplente
-                            </h3>
-                            <dl class="space-y-3">
-                                <div>
-                                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Nombre</dt>
-                                    <dd class="mt-1 text-base font-semibold text-gray-900 dark:text-gray-100">{{ $suplencia->docenteSuplente->name }}</dd>
+                                <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase">Docente Suplente</h3>
+                                @if($suplencia->id_docente_externo)
+                                    <span class="text-xs text-gray-500 dark:text-gray-400 italic">(externo)</span>
+                                @endif
+                            </div>
+                            <p class="text-base font-semibold text-gray-900 dark:text-gray-100 mb-1">
+                                {{ $suplencia->nombre_suplente }}
+                            </p>
+                            
+                            @if($suplencia->docenteExterno)
+                                {{-- Información de docente externo --}}
+                                @if($suplencia->docenteExterno->especialidad)
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">
+                                        {{ $suplencia->docenteExterno->especialidad }}
+                                    </p>
+                                @endif
+                                <div class="mt-2 space-y-1">
+                                    @if($suplencia->docenteExterno->telefono)
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">
+                                            📱 {{ $suplencia->docenteExterno->telefono }}
+                                        </p>
+                                    @endif
+                                    @if($suplencia->docenteExterno->email)
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">
+                                            ✉️ {{ $suplencia->docenteExterno->email }}
+                                        </p>
+                                    @endif
                                 </div>
-                                <div>
-                                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Email</dt>
-                                    <dd class="mt-1 text-sm text-gray-700 dark:text-gray-300">{{ $suplencia->docenteSuplente->email }}</dd>
-                                </div>
-                            </dl>
+                            @else
+                                {{-- Información de docente interno --}}
+                                <p class="text-sm text-gray-600 dark:text-gray-400">
+                                    {{ $suplencia->docenteSuplente->email ?? 'N/A' }}
+                                </p>
+                            @endif
                         </div>
-
                     </div>
 
                     {{-- Observaciones --}}
                     @if($suplencia->observaciones)
-                        <div class="mt-6 bg-yellow-50 dark:bg-yellow-900/20 p-6 rounded-lg border border-yellow-200 dark:border-yellow-700">
-                            <h3 class="text-lg font-semibold text-yellow-900 dark:text-yellow-100 mb-3 flex items-center">
-                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700 mb-6">
+                            <div class="flex items-center gap-2 mb-2">
+                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                                 </svg>
-                                Observaciones
-                            </h3>
+                                <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase">Observaciones</h3>
+                            </div>
                             <p class="text-sm text-gray-700 dark:text-gray-300">{{ $suplencia->observaciones }}</p>
                         </div>
                     @endif
+
+                    {{-- Metadatos --}}
+                    <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
+                        <p class="text-xs text-gray-500 dark:text-gray-400">
+                            Registrado el {{ $suplencia->created_at->format('d/m/Y H:i') }}
+                        </p>
+                    </div>
 
                     {{-- Acciones --}}
                     <div class="mt-6 flex gap-3">

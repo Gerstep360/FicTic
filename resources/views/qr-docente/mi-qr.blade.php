@@ -20,7 +20,57 @@
                 </div>
             @endif
 
-            <!-- Bienvenida -->
+            @if(isset($sinGestion) && $sinGestion)
+                <!-- Sin gestión -->
+                <div class="bg-slate-800 rounded-lg shadow-xl border border-slate-700 p-12 text-center">
+                    <svg class="w-16 h-16 text-orange-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                    <p class="text-slate-200 text-lg font-semibold mb-2">No hay gestiones registradas</p>
+                    <p class="text-slate-400">Contacta al administrador del sistema</p>
+                </div>
+            @elseif(isset($sinQr) && $sinQr)
+                <!-- Sin QR generado -->
+                <div class="bg-gradient-to-br from-orange-900/30 to-red-900/30 border border-orange-700 rounded-lg p-12 text-center">
+                    <svg class="w-20 h-20 text-orange-400 mx-auto mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                    </svg>
+                    <h3 class="text-2xl font-bold text-orange-200 mb-3">
+                        Código QR No Disponible
+                    </h3>
+                    <p class="text-orange-300/90 mb-6 max-w-md mx-auto leading-relaxed">
+                        Tu código QR aún no ha sido generado por el administrador.
+                    </p>
+                    
+                    <div class="bg-slate-800/50 rounded-lg p-6 max-w-lg mx-auto mb-6 border border-orange-700/30">
+                        <h4 class="text-sm font-semibold text-orange-200 uppercase tracking-wider mb-3">
+                            📋 Información
+                        </h4>
+                        <div class="space-y-2 text-sm text-slate-300">
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Docente:</span>
+                                <span class="font-medium">{{ $docente->name }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Gestión:</span>
+                                <span class="font-medium">{{ $gestionActual->nombre }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-orange-900/30 border border-orange-600/50 rounded-lg p-5 max-w-lg mx-auto">
+                        <p class="text-sm text-orange-200 font-medium mb-2">
+                            ⚠️ ¿Qué hacer?
+                        </p>
+                        <p class="text-xs text-orange-300/80 leading-relaxed">
+                            Contacta a tu <strong>Coordinador de Carrera</strong> o al 
+                            <strong>Administrador del Sistema</strong> para que generen tu código QR 
+                            para la gestión {{ $gestionActual->nombre }}.
+                        </p>
+                    </div>
+                </div>
+            @else
+                <!-- QR existe - Mostrar como antes -->
             <div class="mb-6 bg-gradient-to-r from-purple-900/50 to-indigo-900/50 border border-purple-700 rounded-lg p-6">
                 <h3 class="text-xl font-bold text-purple-200 mb-2">
                     👋 Bienvenido, {{ auth()->user()->name }}
@@ -247,6 +297,7 @@
 
         </div>
     </div>
+    @endif {{-- Cierre del if principal --}}
 
     <script>
         function toggleAccordion(id) {

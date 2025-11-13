@@ -13,6 +13,11 @@ Route::middleware(['auth'])->prefix('admin/publicacion')->name('publicacion.')->
         ->middleware('permission:publicar_horarios|Admin DTIC')
         ->name('index');
     
+    // Vista previa antes de publicar
+    Route::get('/{gestion}/preview', [PublicacionHorarioController::class, 'preview'])
+        ->middleware('permission:publicar_horarios|Admin DTIC')
+        ->name('preview');
+    
     // Publicar una gestión
     Route::post('/{gestion}/publicar', [PublicacionHorarioController::class, 'publicar'])
         ->middleware('permission:publicar_horarios|Admin DTIC')

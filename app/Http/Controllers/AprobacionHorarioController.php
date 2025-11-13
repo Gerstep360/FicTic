@@ -95,15 +95,20 @@ class AprobacionHorarioController extends Controller
             'id_carrera' => ['nullable', 'exists:carreras,id_carrera'],
         ]);
 
-        // Verificar que no exista ya una aprobación para esta gestión-carrera
-        $existe = AprobacionHorario::where('id_gestion', $validated['id_gestion'])
-            ->where('id_carrera', $validated['id_carrera'])
-            ->exists();
+        // REGLA: Solo una aprobación activa por gestión
+        // Verificar si ya existe CUALQUIER aprobación para esta gestión
+        $aprobacionExistente = AprobacionHorario::where('id_gestion', $validated['id_gestion'])
+            ->whereNotIn('estado', ['rechazado']) // Excluir solo rechazadas
+            ->first();
 
-        if ($existe) {
+        if ($aprobacionExistente) {
+            $alcance = $aprobacionExistente->id_carrera 
+                ? "para {$aprobacionExistente->carrera->nombre_carrera}" 
+                : "para toda la facultad";
+            
             return redirect()
                 ->back()
-                ->with('error', 'Ya existe un proceso de aprobación para esta gestión y carrera.');
+                ->with('error', "Ya existe un proceso de aprobación activo {$alcance} para esta gestión. Complete o elimine el proceso existente antes de crear uno nuevo.");
         }
 
         // Contar horarios actuales (a través de la relación con grupos)

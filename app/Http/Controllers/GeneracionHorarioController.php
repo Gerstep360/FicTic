@@ -124,6 +124,16 @@ class GeneracionHorarioController extends Controller
                     $resultado['metricas']
                 );
 
+                // Seleccionar automáticamente si es la primera generación completada de esta gestión
+                $otrasGeneraciones = GeneracionHorario::where('id_gestion', $validated['id_gestion'])
+                    ->where('estado', 'completado')
+                    ->where('id_generacion', '!=', $generacion->id_generacion)
+                    ->count();
+
+                if ($otrasGeneraciones === 0) {
+                    $generacion->update(['is_seleccionado' => true]);
+                }
+
                 // Registrar en bitácora
                 $this->logBitacora($request, [
                     'accion' => 'generar',
@@ -195,6 +205,40 @@ class GeneracionHorarioController extends Controller
     }
 
     /**
+     * Seleccionar esta generación para ser aplicada
+     */
+    public function seleccionar(Request $request, GeneracionHorario $generacionHorario)
+    {
+        if (!$generacionHorario->puede_aplicarse) {
+            return redirect()
+                ->back()
+                ->with('error', 'Esta generación no puede ser seleccionada.');
+        }
+
+        try {
+            $generacionHorario->seleccionar();
+
+            $this->logBitacora($request, [
+                'accion' => 'seleccionar',
+                'modulo' => 'Generación Automática de Horarios',
+                'tabla_afectada' => 'generacion_horarios',
+                'registro_id' => $generacionHorario->id_generacion,
+                'descripcion' => "Generación #{$generacionHorario->id_generacion} seleccionada para aplicar",
+                'id_gestion' => $generacionHorario->id_gestion,
+                'exitoso' => true,
+            ]);
+
+            return redirect()
+                ->back()
+                ->with('success', 'Generación seleccionada. Ahora puedes aplicarla.');
+        } catch (\Exception $e) {
+            return redirect()
+                ->back()
+                ->with('error', 'Error al seleccionar: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Aplicar horarios generados a la base de datos
      */
     public function aplicar(Request $request, GeneracionHorario $generacionHorario)
@@ -205,8 +249,25 @@ class GeneracionHorarioController extends Controller
                 ->with('error', 'Esta generación no puede aplicarse.');
         }
 
+        // Verificar si esta generación está seleccionada (si hay múltiples generaciones)
+        $totalGeneracionesCompletadas = GeneracionHorario::where('id_gestion', $generacionHorario->id_gestion)
+            ->whereIn('estado', ['completado', 'aplicado']) // Incluir aplicados también
+            ->count();
+
+        if ($totalGeneracionesCompletadas > 1 && !$generacionHorario->is_seleccionado) {
+            return redirect()
+                ->back()
+                ->with('error', 'Debes seleccionar primero esta generación antes de aplicarla. Hay múltiples opciones disponibles.');
+        }
+
         try {
             DB::beginTransaction();
+
+            // Revertir cualquier generación aplicada anteriormente de esta gestión
+            GeneracionHorario::where('id_gestion', $generacionHorario->id_gestion)
+                ->where('estado', 'aplicado')
+                ->where('id_generacion', '!=', $generacionHorario->id_generacion)
+                ->update(['estado' => 'completado']);
 
             // Eliminar horarios existentes para esta gestión/carrera
             $query = HorarioClase::whereHas('grupo', function($q) use ($generacionHorario) {
@@ -236,6 +297,47 @@ class GeneracionHorarioController extends Controller
             // Marcar generación como aplicada
             $generacionHorario->marcarComoAplicado();
 
+            // REGLA: Solo una aprobación activa por gestión
+            // Verificar si ya existe una aprobación activa para esta gestión
+            $aprobacionExistente = \App\Models\AprobacionHorario::where('id_gestion', $generacionHorario->id_gestion)
+                ->whereNotIn('estado', ['rechazado'])
+                ->first();
+
+            if ($aprobacionExistente) {
+                // Actualizar la aprobación existente
+                $aprobacionExistente->update([
+                    'id_carrera' => $generacionHorario->id_carrera, // Actualizar alcance
+                    'estado' => 'borrador', // Resetear a borrador
+                    'total_horarios' => $generacionHorario->total_grupos,
+                    'horarios_validados' => $generacionHorario->grupos_asignados,
+                    'conflictos_pendientes' => $generacionHorario->conflictos_detectados ?? 0,
+                    'observaciones_coordinador' => 'Horarios regenerados automáticamente el ' . now()->format('d/m/Y H:i'),
+                    'id_coordinador' => auth()->id(),
+                    // Resetear aprobaciones anteriores
+                    'id_director' => null,
+                    'id_decano' => null,
+                    'fecha_envio_director' => null,
+                    'fecha_respuesta_director' => null,
+                    'fecha_envio_decano' => null,
+                    'fecha_respuesta_decano' => null,
+                    'observaciones_director' => null,
+                    'observaciones_decano' => null,
+                ]);
+                $aprobacion = $aprobacionExistente;
+            } else {
+                // Crear nueva aprobación
+                $aprobacion = \App\Models\AprobacionHorario::create([
+                    'id_gestion' => $generacionHorario->id_gestion,
+                    'id_carrera' => $generacionHorario->id_carrera,
+                    'estado' => 'borrador',
+                    'total_horarios' => $generacionHorario->total_grupos,
+                    'horarios_validados' => $generacionHorario->grupos_asignados,
+                    'conflictos_pendientes' => $generacionHorario->conflictos_detectados ?? 0,
+                    'observaciones_coordinador' => 'Horarios generados automáticamente el ' . now()->format('d/m/Y H:i'),
+                    'id_coordinador' => auth()->id(),
+                ]);
+            }
+
             DB::commit();
 
             // Registrar en bitácora
@@ -245,14 +347,15 @@ class GeneracionHorarioController extends Controller
                 'tabla_afectada' => 'horario_clases',
                 'registro_id' => $generacionHorario->id_generacion,
                 'descripcion' => "Se aplicaron {$generacionHorario->grupos_asignados} horarios generados automáticamente. " .
-                    "Horarios anteriores eliminados: {$horariosEliminados}",
+                    "Horarios anteriores eliminados: {$horariosEliminados}. " .
+                    "Proceso de aprobación creado/actualizado (ID: {$aprobacion->id_aprobacion}).",
                 'id_gestion' => $generacionHorario->id_gestion,
                 'exitoso' => true,
             ]);
 
             return redirect()
                 ->route('generacion-horarios.show', $generacionHorario)
-                ->with('success', "Horarios aplicados exitosamente. Se crearon {$generacionHorario->grupos_asignados} asignaciones.");
+                ->with('success', "Horarios aplicados exitosamente. Se crearon {$generacionHorario->grupos_asignados} asignaciones y se inició el proceso de aprobación.");
         } catch (\Exception $e) {
             DB::rollBack();
 

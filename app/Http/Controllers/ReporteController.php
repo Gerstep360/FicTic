@@ -233,7 +233,7 @@ class ReporteController extends Controller
         $carrera = Carrera::with('facultad')->findOrFail($validated['id_carrera']);
         
         // Obtener docentes de la carrera (via grupos)
-        $docentesIds = Grupo::where('id_materia', function($q) use ($validated) {
+        $docentesIds = Grupo::whereIn('id_materia', function($q) use ($validated) {
             $q->select('id_materia')
               ->from('materias')
               ->where('id_carrera', $validated['id_carrera']);

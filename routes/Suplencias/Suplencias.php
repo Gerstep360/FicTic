@@ -3,6 +3,16 @@
 use App\Http\Controllers\SuplenciaController;
 use Illuminate\Support\Facades\Route;
 
+// AJAX: obtener horarios de un docente (necesario para el formulario)
+Route::middleware(['auth'])->group(function () {
+    Route::get('/api/horarios/docente/{idDocente}', [SuplenciaController::class, 'horariosDocente'])
+         ->name('suplencias.horarios-docente');
+    
+    // AJAX: obtener lista de docentes externos activos
+    Route::get('/api/docentes-externos', [SuplenciaController::class, 'docentesExternos'])
+         ->name('suplencias.docentes-externos');
+});
+
 Route::middleware(['auth', 'permission:gestionar_suplencias'])->group(function () {
     
     // Listado y gestión de suplencias
@@ -24,6 +34,10 @@ Route::middleware(['auth', 'permission:gestionar_suplencias'])->group(function (
     // AJAX: buscar docentes disponibles
     Route::post('/admin/suplencias/docentes-disponibles', [SuplenciaController::class, 'docentesDisponibles'])
          ->name('suplencias.docentes-disponibles');
+    
+    // AJAX: guardar docente externo
+    Route::post('/admin/suplencias/guardar-docente-externo', [SuplenciaController::class, 'storeDocenteExterno'])
+         ->name('suplencias.store-docente-externo');
 });
 
 // Ruta para docentes ver sus suplencias asignadas

@@ -20,10 +20,14 @@ class DatabaseSeeder extends Seeder
             FacultadSeeder::class,
             AulasSeeder::class,
             CarreraSeeder::class,
-            MateriasSeeder::class,
+            MateriasTroncoComunSeeder::class, // primero (multicarrera)
+            MateriasInformaticaSeeder::class,
+            MateriasSistemasSeeder::class,
+            MateriasRedesSeeder::class,
             DocentesSeeder::class,
             PopularFICCTGruposSeeder::class,
-            
+            BloquesSeeder::class,
+
         ]);
     }
 }

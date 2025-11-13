@@ -1,51 +1,48 @@
 {{-- resources/views/qr-docente/template.blade.php --}}
-<div id="qr-card-export" class="relative bg-white w-full max-w-[400px] mx-auto rounded-[2.5rem] p-8 text-center shadow-2xl shadow-slate-200/50 border border-slate-100 font-sans overflow-hidden">
+<div style="background: white; width: 400px; border-radius: 24px; padding: 32px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.1); border: 1px solid #e5e7eb; font-family: system-ui, -apple-system, sans-serif; margin: 0 auto;">
     
-    <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500 opacity-80"></div>
+    <!-- Barra superior -->
+    <div style="height: 6px; background: linear-gradient(90deg, #6366f1, #8b5cf6, #6366f1); border-radius: 3px; margin: -32px -32px 24px -32px;"></div>
 
-    <div class="mb-8 mt-4">
-        <p class="text-[11px] font-bold tracking-[0.3em] text-slate-400 uppercase mb-3">
-            Facultad de Ciencias y Tecnología
-        </p>
-        <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight leading-none">
-            Control de Asistencia
-        </h1>
-    </div>
+    <!-- Facultad -->
+    <p style="font-size: 9px; font-weight: 700; letter-spacing: 2px; color: #9ca3af; text-transform: uppercase; margin: 0 0 8px 0;">
+        Facultad de Ciencias y Tecnología
+    </p>
+    
+    <!-- Título -->
+    <h1 style="font-size: 20px; font-weight: 900; color: #1e293b; margin: 0 0 24px 0; letter-spacing: -0.5px;">
+        Control de Asistencia
+    </h1>
 
-    <div class="mb-8 relative inline-block">
-        <div class="p-4 bg-slate-50 rounded-[2rem] border border-slate-100 shadow-inner">
-            <div class="bg-white p-3 rounded-[1.5rem] shadow-sm ring-1 ring-slate-900/5 qr-container">
-                @php
-                    $svgBase64 = base64_encode($qrSvg);
-                    $qrDataUrl = 'data:image/svg+xml;base64,' . $svgBase64;
-                @endphp
-                <img src="{{ $qrDataUrl }}" alt="QR Code" class="w-48 h-48 sm:w-56 sm:h-56 object-contain mx-auto">
-            </div>
-        </div>
-        
-        <div class="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-white px-4 py-1.5 rounded-full shadow-lg shadow-indigo-500/10 border border-indigo-50 flex items-center gap-2">
-            <span class="relative flex h-2.5 w-2.5">
-              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-              <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-indigo-600"></span>
-            </span>
-            <span class="text-[11px] font-bold text-indigo-900 uppercase tracking-wider">Escanear aquí</span>
+    <!-- QR Code -->
+    <div style="background: #f8fafc; padding: 20px; border-radius: 20px; margin: 0 0 24px 0; border: 1px solid #e2e8f0;">
+        <div style="background: white; padding: 12px; border-radius: 16px; display: inline-block;">
+            @php
+                $svgBase64 = base64_encode($qrSvg);
+                $qrDataUrl = 'data:image/svg+xml;base64,' . $svgBase64;
+            @endphp
+            <img src="{{ $qrDataUrl }}" alt="QR" style="width: 240px; height: 240px; display: block;">
         </div>
     </div>
 
-    <div class="space-y-2 px-2">
-        <h2 class="text-xl sm:text-2xl font-black text-slate-900 uppercase leading-tight break-words">
-            {{ $token->docente->name }}
-        </h2>
-        <div class="inline-block px-3 py-1 bg-slate-100 rounded-lg">
-             <p class="text-xs font-bold text-slate-600 uppercase tracking-wide break-words">
-                {{ $token->docente->roles->pluck('name')->join(' / ') }}
-            </p>
-        </div>
-    </div>
+    <!-- Nombre Docente -->
+    <h2 style="font-size: 18px; font-weight: 900; color: #0f172a; text-transform: uppercase; margin: 0 0 8px 0; letter-spacing: 0.5px; line-height: 1.2;">
+        {{ $token->docente->name }}
+    </h2>
+    
+    <!-- Puesto/Rol -->
+    <p style="font-size: 11px; font-weight: 700; color: #6366f1; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 16px 0;">
+        {{ $token->docente->roles->pluck('name')->first() ?? 'Docente' }}
+    </p>
 
-    <div class="mt-8 pt-6 border-t border-slate-100 flex flex-col items-center">
-        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Gestión Académica</span>
-        <span class="text-sm font-bold text-indigo-600">{{ $token->gestion->nombre }}</span>
+    <!-- Gestión -->
+    <div style="padding: 12px 0; border-top: 1px solid #e5e7eb; margin-top: 16px;">
+        <span style="font-size: 9px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 1.5px; display: block; margin-bottom: 4px;">
+            Gestión
+        </span>
+        <span style="font-size: 12px; font-weight: 700; color: #6366f1;">
+            {{ $token->gestion->nombre }}
+        </span>
     </div>
 
 </div>

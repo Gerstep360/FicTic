@@ -193,7 +193,7 @@
     </div>
 
     <!-- Modal Crear -->
-    <div id="createModal" class="fixed inset-0 bg-black/50 z-50 items-center justify-center p-4" style="display: none;">
+    <div id="createModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 items-center justify-center p-4" style="display: none;">
         <div class="bg-slate-800 rounded-lg shadow-xl border border-slate-700 max-w-md w-full">
             <div class="px-6 py-4 bg-gradient-to-r from-slate-900 to-slate-800 border-b border-slate-700">
                 <h3 class="text-lg font-semibold text-slate-200">Nuevo Proceso de Aprobación</h3>
@@ -201,6 +201,22 @@
             
             <form action="{{ route('aprobaciones.store') }}" method="POST" class="p-6">
                 @csrf
+                
+                <!-- Advertencia importante -->
+                <div class="mb-4 bg-yellow-900/20 border border-yellow-700/50 rounded-lg p-4">
+                    <div class="flex gap-3">
+                        <svg class="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                        </svg>
+                        <div>
+                            <p class="text-sm font-medium text-yellow-300 mb-1">Regla Importante</p>
+                            <p class="text-xs text-yellow-200/80">
+                                Solo puede existir <strong>un proceso activo por gestión</strong>. Si crea un nuevo proceso, 
+                                se actualizará el existente y se reiniciará el flujo de aprobación.
+                            </p>
+                        </div>
+                    </div>
+                </div>
                 
                 <div class="space-y-4">
                     <div>

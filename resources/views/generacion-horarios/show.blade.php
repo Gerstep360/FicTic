@@ -1,38 +1,74 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex items-center justify-between">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div class="flex items-center gap-3">
                 <a href="{{ route('generacion-horarios.index') }}" class="text-slate-400 hover:text-slate-200">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
                     </svg>
                 </a>
-                <h2 class="font-semibold text-xl text-slate-200 leading-tight">
-                    {{ __('Detalle de Generación #') }}{{ $generacionHorario->id_generacion }}
+                <h2 class="font-semibold text-lg sm:text-xl text-slate-200 leading-tight">
+                    {{ __('Generación #') }}{{ $generacionHorario->id_generacion }}
                 </h2>
+                
+                @if($generacionHorario->is_seleccionado && $generacionHorario->puede_aplicarse)
+                    <span class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-cyan-500/30 text-cyan-300 border border-cyan-400/50 flex items-center gap-1 shadow-lg shadow-cyan-500/20">
+                        <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                        </svg>
+                        SELECCIONADO
+                    </span>
+                @endif
             </div>
 
-            <div class="flex items-center gap-2">
+            <div class="flex flex-wrap items-center gap-2">
                 @if($generacionHorario->es_completado || $generacionHorario->es_aplicado)
-                    <a href="{{ route('generacion-horarios.pdf', $generacionHorario) }}" class="btn-secondary" target="_blank">
+                    <a href="{{ route('generacion-horarios.pdf', $generacionHorario) }}" class="btn-secondary text-sm" target="_blank">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
                         </svg>
-                        Descargar PDF
+                        <span class="hidden sm:inline">Descargar</span> PDF
                     </a>
                 @endif
 
                 @if($generacionHorario->puede_aplicarse && (auth()->user()->can('generar_horario_auto') || auth()->user()->hasRole('Admin DTIC')))
-                    <form method="POST" action="{{ route('generacion-horarios.aplicar', $generacionHorario) }}"
-                          onsubmit="return confirm('¿Está seguro de aplicar estos horarios? Esto eliminará los horarios actuales de esta gestión/carrera y los reemplazará con los generados.');">
-                        @csrf
-                        <button type="submit" class="btn-primary">
+                    @if(!$generacionHorario->is_seleccionado)
+                        <form method="POST" action="{{ route('generacion-horarios.seleccionar', $generacionHorario) }}" class="inline">
+                            @csrf
+                            <button type="submit" class="btn-outline text-sm border-cyan-500/40 text-cyan-300 hover:bg-cyan-500/20 hover:border-cyan-400">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                <span class="hidden sm:inline">Seleccionar para</span> Aplicar
+                            </button>
+                        </form>
+                    @endif
+
+                    @if($generacionHorario->is_seleccionado)
+                        <form method="POST" action="{{ route('generacion-horarios.aplicar', $generacionHorario) }}"
+                              onsubmit="return confirm('¿Está seguro de aplicar estos horarios? Esto eliminará los horarios actuales de esta gestión/carrera y los reemplazará con los generados.');">
+                            @csrf
+                            <button type="submit" class="btn-primary text-sm hover:shadow-lg hover:shadow-blue-500/20">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                </svg>
+                                Aplicar<span class="hidden sm:inline"> Horarios</span>
+                            </button>
+                        </form>
+                    @else
+                        <button type="button" 
+                                disabled
+                                title="Debes seleccionar esta generación primero"
+                                class="btn-primary text-sm opacity-40 cursor-not-allowed bg-slate-700">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                             </svg>
-                            Aplicar Horarios
+                            Aplicar<span class="hidden sm:inline"> Horarios</span>
+                            <svg class="w-3 h-3 ml-1" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M5 10a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1z" clip-rule="evenodd"/>
+                            </svg>
                         </button>
-                    </form>
+                    @endif
                 @endif
 
                 @if(!$generacionHorario->es_aplicado && (auth()->user()->can('generar_horario_auto') || auth()->user()->hasRole('Admin DTIC')))

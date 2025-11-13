@@ -197,7 +197,9 @@ class HorarioClaseController extends Controller
             'bloque'
         ]);
 
-        return view('horarios.show', compact('horario'));
+        $dias = ['', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+
+        return view('horarios.show', compact('horario', 'dias'));
     }
 
     /**
