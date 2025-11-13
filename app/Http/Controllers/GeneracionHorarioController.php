@@ -138,7 +138,33 @@ class GeneracionHorarioController extends Controller
                 $this->logBitacora($request, [
                     'accion' => 'generar',
                     'modulo' => 'Generación Automática de Horarios',
-                    'tabla_afectada' => 'generacion_horarios',
+                    'tabla_afectada' => 'generacion_
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    0
+                    horarios',
                     'registro_id' => $generacion->id_generacion,
                     'descripcion' => "Generación automática completada para " . 
                         ($generacion->carrera ? $generacion->carrera->nombre_carrera : 'toda la facultad') . 

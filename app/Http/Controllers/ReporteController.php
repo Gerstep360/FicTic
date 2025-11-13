@@ -34,14 +34,23 @@ class ReporteController extends Controller
      */
     public function index()
     {
-        $docentes = User::role('Docente')->orderBy('name')->get();
+        // Obtener docentes con horarios activos
+        $docentes = User::role('Docente')
+                       ->whereHas('horarioClasesComoDocente')
+                       ->orderBy('name')
+                       ->get();
+        
+        // Obtener grupos que tengan horarios asignados
         $grupos = Grupo::with(['materia', 'gestion'])
-                      ->whereHas('gestion', function($q) {
-                          $q->where('publicada', 1);
-                      })
+                      ->whereHas('horarios')
                       ->orderBy('nombre_grupo')
                       ->get();
-        $aulas = Aula::orderBy('codigo')->get();
+        
+        // Obtener aulas con horarios
+        $aulas = Aula::whereHas('horarios')
+                    ->orderBy('codigo')
+                    ->get();
+        
         $carreras = Carrera::with('facultad')->orderBy('nombre')->get();
         
         return view('reportes.index', compact('docentes', 'grupos', 'aulas', 'carreras'));
@@ -59,11 +68,10 @@ class ReporteController extends Controller
         
         $docente = User::findOrFail($validated['id_docente']);
         
-        $horarios = HorarioClase::with(['grupo.materia', 'aula', 'bloque'])
+        // Obtener horarios del docente sin filtrar por gestión publicada
+        // (ya que puede tener horarios de gestión actual aunque no esté publicada)
+        $horarios = HorarioClase::with(['grupo.materia', 'grupo.gestion', 'aula', 'bloque'])
                                 ->where('id_docente', $validated['id_docente'])
-                                ->whereHas('grupo.gestion', function($q) {
-                                    $q->where('publicada', 1);
-                                })
                                 ->orderBy('dia_semana')
                                 ->orderBy('id_bloque')
                                 ->get();
@@ -99,13 +107,16 @@ class ReporteController extends Controller
             'formato' => 'required|in:pdf,excel',
         ]);
         
-        $grupo = Grupo::with(['materia', 'gestion', 'docente'])->findOrFail($validated['id_grupo']);
+        $grupo = Grupo::with(['materia', 'gestion'])->findOrFail($validated['id_grupo']);
         
         $horarios = HorarioClase::with(['docente', 'aula', 'bloque'])
                                 ->where('id_grupo', $validated['id_grupo'])
                                 ->orderBy('dia_semana')
                                 ->orderBy('id_bloque')
                                 ->get();
+        
+        // Obtener el docente principal del grupo (si existe)
+        $docentePrincipal = $grupo->id_docente ? User::find($grupo->id_docente) : null;
         
         // Registrar en bitácora
         $this->logBitacora($request, [
@@ -118,7 +129,7 @@ class ReporteController extends Controller
         ]);
         
         if ($validated['formato'] === 'pdf') {
-            $pdf = Pdf::loadView('reportes.pdf.horario-grupo', compact('grupo', 'horarios'));
+            $pdf = Pdf::loadView('reportes.pdf.horario-grupo', compact('grupo', 'horarios', 'docentePrincipal'));
             return $pdf->download("horario_grupo_{$grupo->id_grupo}_" . date('Y-m-d') . ".pdf");
         } else {
             // Similar export para grupo

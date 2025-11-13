@@ -29,7 +29,12 @@ class AsistenciaManualController extends Controller
                         ->orderBy('name')
                         ->get(['id', 'name', 'email']);
         
-        return view('asistencia-manual.index', compact('docentes'));
+        // Obtener todas las asistencias (QR y manuales) ordenadas por fecha descendente
+        $asistencias = Asistencia::with(['docente', 'horario.grupo.materia', 'horario.aula', 'horario.bloque', 'registrador'])
+                                  ->orderBy('fecha_hora', 'desc')
+                                  ->paginate(20);
+        
+        return view('asistencia-manual.index', compact('docentes', 'asistencias'));
     }
     
     /**
@@ -118,12 +123,12 @@ class AsistenciaManualController extends Controller
         $docente = User::findOrFail($validated['id_docente']);
         
         // Bitácora
-        $this->logBitacora(
-            accion: 'registro_manual',
-            tabla_afectada: 'asistencias',
-            registro_id: $asistencia->id_asistencia,
-            descripcion: "Registro manual de asistencia para {$docente->name} - {$horario->grupo->materia->nombre} en {$horario->aula->codigo}",
-            metadata: [
+        $this->logBitacora($request, [
+            'accion' => 'registro_manual',
+            'tabla_afectada' => 'asistencias',
+            'registro_id' => $asistencia->id_asistencia,
+            'descripcion' => "Registro manual de asistencia para {$docente->name} - {$horario->grupo->materia->nombre} en {$horario->aula->codigo}",
+            'metadata' => [
                 'id_docente' => $docente->id,
                 'docente' => $docente->name,
                 'id_horario' => $horario->id_horario,
@@ -136,8 +141,8 @@ class AsistenciaManualController extends Controller
                 'observacion' => $validated['observacion'],
                 'registrado_por' => auth()->user()->name
             ],
-            exitoso: true
-        );
+            'exitoso' => true
+        ]);
         
         return redirect()
             ->route('asistencia-manual.index')

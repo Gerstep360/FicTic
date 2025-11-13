@@ -22,7 +22,7 @@
     <div class="info">
         <p><strong>Materia:</strong> {{ $grupo->materia->nombre ?? 'N/A' }}</p>
         <p><strong>Código:</strong> {{ $grupo->materia->codigo ?? 'N/A' }}</p>
-        <p><strong>Docente:</strong> {{ $grupo->docente->name ?? 'No asignado' }}</p>
+        <p><strong>Docente Principal:</strong> {{ $docentePrincipal->name ?? 'No asignado' }}</p>
         <p><strong>Turno:</strong> {{ $grupo->turno }}</p>
         <p><strong>Modalidad:</strong> {{ $grupo->modalidad }}</p>
         <p><strong>Gestión:</strong> {{ $grupo->gestion->nombre ?? 'N/A' }}</p>

@@ -28,12 +28,12 @@ class HorarioDocenteExport implements FromCollection, WithHeadings, WithMapping,
     public function headings(): array
     {
         return [
-            'Docente: ' . $this->docente->name,
-            '',
-            '',
-            '',
-            '',
-            '',
+            'Día',
+            'Horario',
+            'Materia',
+            'Grupo',
+            'Aula',
+            'Gestión',
         ];
     }
 

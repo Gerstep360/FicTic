@@ -56,4 +56,10 @@ class Asistencia extends Model
     {
         return $this->belongsTo(User::class, 'registrado_por', 'id');
     }
+
+    // Alias para registrador
+    public function registradoPor()
+    {
+        return $this->belongsTo(User::class, 'registrado_por', 'id');
+    }
 }
